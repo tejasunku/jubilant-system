@@ -1,0 +1,15 @@
+# Ansible sensitive files - NEVER commit these
+*.vault
+.vault_pass
+.vault_password
+inventory.ini
+.local.cfg
+*.local
+
+# Ansible runtime
+.ansible/
+ansible.cfg.local
+
+# OS sensitive files
+.ssh/
+known_hosts

@@ -1,0 +1,8 @@
+# Example inventory - copy this to inventory.ini and fill in your values
+# DO NOT commit inventory.ini to the repository!
+
+[ubuntu_servers]
+server1 ansible_host=YOUR_SERVER_IP ansible_user=admin ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+[ubuntu_servers:vars]
+ansible_python_interpreter=/usr/bin/python3

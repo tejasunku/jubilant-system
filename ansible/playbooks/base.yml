@@ -1,0 +1,44 @@
+---
+# Base playbook for Ubuntu server setup
+- name: Base Ubuntu Server Configuration
+  hosts: ubuntu_servers
+  become: true
+  vars:
+    python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install common packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - htop
+          - ufw
+        state: present
+
+    - name: Setup UFW default policies
+      community.general.ufw:
+        state: enabled
+        policy: deny
+
+    - name: Allow SSH through firewall
+      community.general.ufw:
+        rule: allow
+        direction: in
+        port: '22'
+        proto: tcp
+
+    - name: Create admin user
+      ansible.builtin.user:
+        name: admin
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+      when: ansible_user != 'admin'
