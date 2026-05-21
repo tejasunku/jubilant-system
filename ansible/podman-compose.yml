@@ -1,0 +1,27 @@
+# Hindsight - AI Memory System
+# https://hindsight.vectorize.io/
+#
+# Usage:
+#   1. Copy .env file with API keys to /opt/hindsight/.env
+#   2. Run: podman compose up -d
+#   3. Access: http://localhost:8888 (API), http://localhost:9999 (Web UI)
+#
+# Environment variables are stored in /opt/hindsight/.env
+# Do NOT commit this file with actual API keys
+
+services:
+  hindsight:
+    image: ghcr.io/vectorize-io/hindsight:latest-slim
+    container_name: hindsight
+    pull_policy: always
+    ports:
+      - "8888:8888"  # API Server
+      - "9999:9999"  # Control Plane (Web UI)
+    env_file:
+      - /opt/hindsight/.env
+    volumes:
+      - hindsight-data:/home/hindsight/.pg0
+    restart: unless-stopped
+
+volumes:
+  hindsight-data:
