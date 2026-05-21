@@ -19,9 +19,4 @@ services:
       - "9999:9999"  # Control Plane (Web UI)
     env_file:
       - /opt/services/.env
-    volumes:
-      - hindsight-data:/home/hindsight/.pg0
     restart: unless-stopped
-
-volumes:
-  hindsight-data:
