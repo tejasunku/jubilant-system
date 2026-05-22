@@ -20,11 +20,16 @@
       when: creds_find.matched == 0
 
     - name: Read tunnel credentials
+      ansible.builtin.slurp:
+        src: "{{ creds_find.files[0].path }}"
+      register: creds_slurp
+
+    - name: Parse tunnel credentials
       ansible.builtin.set_fact:
         credentials_file: "{{ creds_find.files[0].path }}"
-        tunnel_info: "{{ lookup('file', creds_find.files[0].path) | from_json }}"
-        tunnel_name: "{{ lookup('file', creds_find.files[0].path) | from_json | json_query('Name') }}"
-        tunnel_id: "{{ lookup('file', creds_find.files[0].path) | from_json | json_query('ID') }}"
+        tunnel_info: "{{ creds_slurp.content | b64decode | from_json }}"
+        tunnel_name: "{{ creds_slurp.content | b64decode | from_json | json_query('Name') }}"
+        tunnel_id: "{{ creds_slurp.content | b64decode | from_json | json_query('ID') }}"
 
     - name: Load routes configuration
       ansible.builtin.set_fact:
