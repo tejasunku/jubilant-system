@@ -24,8 +24,8 @@ services:
         container_name: hindsight
         pull_policy: always
         ports:
-            - "8888:8888"
-            - "9999:9999"
+            - "127.0.0.1:8888:8888"
+            - "127.0.0.1:9999:9999"
         env_file:
             - /opt/services/.env
         restart: unless-stopped
@@ -35,11 +35,12 @@ services:
         container_name: hermes
         pull_policy: always
         command: gateway run
+        user: "1000:1000"
         ports:
-            - "8642:8642"
-            - "9119:9119"
+            - "127.0.0.1:8642:8642"
+            - "127.0.0.1:9119:9119"
         volumes:
-            - ~/.hermes:/opt/data
+            - /home/admin/.hermes:/opt/data
         env_file:
             - /opt/services/.env
         environment:
