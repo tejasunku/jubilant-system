@@ -1,5 +1,6 @@
 tunnel: {{ tunnel_id }}
 credentials-file: {{ credentials_file }}
+origincert: /etc/cloudflared/cert.pem
 
 ingress:
 {% for route in routes.routes %}
