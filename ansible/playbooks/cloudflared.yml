@@ -1,0 +1,56 @@
+---
+# Cloudflare Tunnel setup for self-hosted services
+- name: Configure Cloudflare Tunnel
+  hosts: ubuntu_servers
+  become: true
+  vars:
+    cloudflared_version: "2025.5.0"
+
+  tasks:
+    - name: Download cloudflared binary
+      ansible.builtin.get_url:
+        url: "https://github.com/cloudflare/cloudflared/releases/download/{{ cloudflared_version }}/cloudflared-linux-amd64"
+        dest: /usr/local/bin/cloudflared
+        mode: '0755'
+      register: cloudflared_download
+
+    - name: Create cloudflared config directory
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/.cloudflared"
+        state: directory
+        mode: '0700'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Copy cloudflared config
+      ansible.builtin.copy:
+        src: cloudflared/config.yml
+        dest: "{{ ansible_user_dir }}/.cloudflared/config.yml"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+
+    - name: Create systemd service for cloudflared tunnel
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/cloudflared.service
+        content: |
+          [Unit]
+          Description=Cloudflare Tunnel
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/local/bin/cloudflared tunnel run --config {{ ansible_user_dir }}/.cloudflared/config.yml
+          Restart=on-failure
+          RestartSec=5s
+          User={{ ansible_user }}
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable and start cloudflared service
+      ansible.builtin.systemd:
+        name: cloudflared
+        state: started
+        enabled: yes
+        daemon_reload: yes
