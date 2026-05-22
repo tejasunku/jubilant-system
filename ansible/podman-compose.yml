@@ -23,11 +23,10 @@ services:
         image: ghcr.io/vectorize-io/hindsight:latest-slim
         container_name: hindsight
         pull_policy: always
-        ports:
-            - "8888:8888" # API Server
-            - "9999:9999" # Control Plane (Web UI)
         env_file:
             - /opt/services/.env
+        environment:
+            - HINDSIGHT_API_HOST=127.0.0.1
         restart: unless-stopped
 
     hermes:
@@ -35,9 +34,6 @@ services:
         container_name: hermes
         pull_policy: always
         command: gateway run
-        ports:
-            - "8642:8642" # Gateway API
-            - "9119:9119" # Dashboard
         volumes:
             - ~/.hermes:/opt/data
         env_file:
@@ -46,8 +42,7 @@ services:
             - HERMES_DASHBOARD=1
             - HERMES_DASHBOARD_TUI=1
             - API_SERVER_ENABLED=true
-            - API_SERVER_HOST=0.0.0.0
-            - API_SERVER_CORS_ORIGINS=*
+            - API_SERVER_HOST=127.0.0.1
         restart: unless-stopped
         deploy:
             limits:
