@@ -62,7 +62,7 @@
 
           [Service]
           Type=simple
-          ExecStart=/usr/local/bin/cloudflared tunnel run --config {{ cloudflared_dir }}/config.yml
+          ExecStart=/usr/local/bin/cloudflared tunnel --config {{ cloudflared_dir }}/config.yml run
           Restart=on-failure
           RestartSec=5s
           User={{ ansible_user }}
