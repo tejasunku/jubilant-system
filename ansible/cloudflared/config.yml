@@ -1,0 +1,24 @@
+# Cloudflare Tunnel configuration for self-hosted services
+# https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/configure-tunnels/
+#
+# Setup:
+#   1. Install cloudflared: curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
+#   2. Authenticate: cloudflared tunnel login
+#   3. Create tunnel: cloudflared tunnel create hindsight
+#   4. Add DNS entries: cloudflared tunnel route dns hindsight hindsight-api.tejasunku.com && cloudflared tunnel route dns hindsight hindsight-console.tejasunku.com && cloudflared tunnel route dns hindsight hermes.tejasunku.com && cloudflared tunnel route dns hindsight hermes-console.tejasunku.com
+#   5. Update TUNNEL_ID below with your tunnel ID (from step 3)
+#   6. Run: cloudflared tunnel run
+
+tunnel: <your-tunnel-id>
+credentials-file: ~/.cloudflared/credentials.json
+
+ingress:
+  - hostname: hindsight-api.tejasunku.com
+    service: http://127.0.0.1:8888
+  - hostname: hindsight-console.tejasunku.com
+    service: http://127.0.0.1:9999
+  - hostname: hermes.tejasunku.com
+    service: http://127.0.0.1:8642
+  - hostname: hermes-console.tejasunku.com
+    service: http://127.0.0.1:9119
+  - service: http_status:404
