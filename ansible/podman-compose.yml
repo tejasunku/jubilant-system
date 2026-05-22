@@ -23,10 +23,14 @@ services:
         image: ghcr.io/vectorize-io/hindsight:latest-slim
         container_name: hindsight
         pull_policy: always
+        ports:
+            - "127.0.0.1:8888:8888"
+            - "127.0.0.1:9999:9999"
         env_file:
             - /opt/services/.env
         environment:
             - HINDSIGHT_API_HOST=127.0.0.1
+            - HINDSIGHT_CP_HOST=127.0.0.1
         restart: unless-stopped
 
     hermes:
@@ -34,6 +38,9 @@ services:
         container_name: hermes
         pull_policy: always
         command: gateway run
+        ports:
+            - "127.0.0.1:8642:8642"
+            - "127.0.0.1:9119:9119"
         volumes:
             - ~/.hermes:/opt/data
         env_file:
