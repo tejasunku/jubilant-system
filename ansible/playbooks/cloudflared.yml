@@ -40,12 +40,19 @@
       ignore_errors: true
 
     - name: Generate cloudflared config
-      ansible.builtin.template:
-        src: ../cloudflared/config.yml.j2
+      ansible.builtin.copy:
         dest: "{{ cloudflared_dir }}/config.yml"
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: '0600'
+        content: |
+          tunnel: {{ tunnel_id }}
+          credentials-file: {{ credentials_file }}
+          origincert: {{ cloudflared_dir }}/cert.pem
+
+          ingress:
+          {% for route in routes.routes %}
+            - hostname: {{ route.hostname }}
+              service: http://127.0.0.1:{{ route.port }}
+          {% endfor %}
+            - service: http_status:404
 
     - name: Route DNS for each subdomain
       command:
