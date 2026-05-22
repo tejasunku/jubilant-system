@@ -1,0 +1,9 @@
+tunnel: {{ tunnel_id }}
+credentials-file: {{ credentials_file }}
+
+ingress:
+{% for route in routes.routes %}
+  - hostname: {{ route.hostname }}
+    service: http://127.0.0.1:{{ route.port }}
+{% endfor %}
+  - service: http_status:404

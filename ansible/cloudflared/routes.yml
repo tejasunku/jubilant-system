@@ -1,0 +1,12 @@
+# Cloudflare Tunnel routes
+# Add routes here - one per service you want to expose
+# Format: hostname → localhost:port
+routes:
+  - hostname: hindsight-api.tejasunku.com
+    port: 8888
+  - hostname: hindsight-console.tejasunku.com
+    port: 9999
+  - hostname: hermes.tejasunku.com
+    port: 8642
+  - hostname: hermes-console.tejasunku.com
+    port: 9119

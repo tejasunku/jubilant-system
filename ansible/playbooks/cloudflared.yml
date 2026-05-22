@@ -4,31 +4,51 @@
   hosts: ubuntu_servers
   become: true
   vars:
-    cloudflared_version: "2025.5.0"
+    cloudflared_dir: "{{ ansible_user_dir }}/.cloudflared"
 
   tasks:
-    - name: Download cloudflared binary
-      ansible.builtin.get_url:
-        url: "https://github.com/cloudflare/cloudflared/releases/download/{{ cloudflared_version }}/cloudflared-linux-amd64"
-        dest: /usr/local/bin/cloudflared
-        mode: '0755'
-      register: cloudflared_download
+    - name: Find tunnel credentials file
+      ansible.builtin.find:
+        path: "{{ cloudflared_dir }}"
+        pattern: "*.json"
+        file_type: file
+      register: creds_find
 
-    - name: Create cloudflared config directory
+    - name: Fail if no tunnel exists
+      ansible.builtin.fail:
+        msg: "No tunnel found in {{ cloudflared_dir }}. Create one manually first: cloudflared tunnel create <name>"
+      when: creds_find.matched == 0
+
+    - name: Read tunnel credentials
+      ansible.builtin.set_fact:
+        credentials_file: "{{ creds_find.files[0].path }}"
+        tunnel_info: "{{ lookup('file', creds_find.files[0].path) | from_json }}"
+        tunnel_name: "{{ lookup('file', creds_find.files[0].path) | from_json | json_query('Name') }}"
+        tunnel_id: "{{ lookup('file', creds_find.files[0].path) | from_json | json_query('ID') }}"
+
+    - name: Load routes configuration
+      ansible.builtin.set_fact:
+        routes: "{{ lookup('ansible.builtin.file', playbook_dir + '/cloudflared/routes.yml') | from_yaml }}"
+
+    - name: Delete existing config if present
       ansible.builtin.file:
-        path: "{{ ansible_user_dir }}/.cloudflared"
-        state: directory
-        mode: '0700'
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
+        path: "{{ cloudflared_dir }}/config.yml"
+        state: absent
+      ignore_errors: true
 
-    - name: Copy cloudflared config
-      ansible.builtin.copy:
-        src: cloudflared/config.yml
-        dest: "{{ ansible_user_dir }}/.cloudflared/config.yml"
+    - name: Generate cloudflared config
+      ansible.builtin.template:
+        src: cloudflared/config.yml.j2
+        dest: "{{ cloudflared_dir }}/config.yml"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: '0600'
+
+    - name: Route DNS for each subdomain
+      command:
+        cmd: "cloudflared tunnel route dns {{ tunnel_name }} {{ item.hostname }}"
+      loop: "{{ routes.routes }}"
+      ignore_errors: true
 
     - name: Create systemd service for cloudflared tunnel
       ansible.builtin.copy:
@@ -40,7 +60,7 @@
 
           [Service]
           Type=simple
-          ExecStart=/usr/local/bin/cloudflared tunnel run --config {{ ansible_user_dir }}/.cloudflared/config.yml
+          ExecStart=/usr/local/bin/cloudflared tunnel run --config {{ cloudflared_dir }}/config.yml
           Restart=on-failure
           RestartSec=5s
           User={{ ansible_user }}
@@ -51,6 +71,6 @@
     - name: Enable and start cloudflared service
       ansible.builtin.systemd:
         name: cloudflared
-        state: started
-        enabled: yes
-        daemon_reload: yes
+        state: restarted
+        enabled: true
+        daemon_reload: true

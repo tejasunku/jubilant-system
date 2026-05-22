@@ -13,3 +13,6 @@ ansible.cfg.local
 # OS sensitive files
 .ssh/
 known_hosts
+
+.env
+.env.*
