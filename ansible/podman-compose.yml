@@ -9,14 +9,46 @@
 # Environment variables are stored in /opt/services/.env
 # Do NOT commit this file with actual API keys
 
+# Hermes Agent - AI Agent with memory
+# https://hermes-agent.nousresearch.com/docs/user-guide/docker/
+#
+# Usage:
+#   1. Create ~/.hermes directory and run setup wizard on first start
+#   2. Configure API keys in ~/.hermes/.env
+#   3. Run: podman compose up -d
+#   4. Access dashboard at http://localhost:9119 (when HERMES_DASHBOARD=1)
+
 services:
-  hindsight:
-    image: ghcr.io/vectorize-io/hindsight:latest-slim
-    container_name: hindsight
-    pull_policy: always
-    ports:
-      - "8888:8888"  # API Server
-      - "9999:9999"  # Control Plane (Web UI)
-    env_file:
-      - /opt/services/.env
-    restart: unless-stopped
+    hindsight:
+        image: ghcr.io/vectorize-io/hindsight:latest-slim
+        container_name: hindsight
+        pull_policy: always
+        ports:
+            - "8888:8888" # API Server
+            - "9999:9999" # Control Plane (Web UI)
+        env_file:
+            - /opt/services/.env
+        restart: unless-stopped
+
+    hermes:
+        image: nousresearch/hermes-agent:latest
+        container_name: hermes
+        pull_policy: always
+        command: gateway run
+        ports:
+            - "8642:8642" # Gateway API
+            - "9119:9119" # Dashboard
+        volumes:
+            - ~/.hermes:/opt/data
+        environment:
+            - HERMES_DASHBOARD=1
+            - HERMES_DASHBOARD_TUI=1
+            - API_SERVER_ENABLED=true
+            - API_SERVER_HOST=0.0.0.0
+            - API_SERVER_KEY=${HERMES_API_KEY:-changeme}
+            - API_SERVER_CORS_ORIGINS=*
+        restart: unless-stopped
+        deploy:
+            limits:
+                memory: 4G
+                cpus: "2.0"
