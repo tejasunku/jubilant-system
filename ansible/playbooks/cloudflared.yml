@@ -43,7 +43,7 @@
 
     - name: Generate cloudflared config
       ansible.builtin.template:
-        src: cloudflared/config.yml.j2
+        src: ../cloudflared/config.yml.j2
         dest: "{{ cloudflared_dir }}/config.yml"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
