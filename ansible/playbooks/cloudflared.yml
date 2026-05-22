@@ -27,8 +27,6 @@
     - name: Parse tunnel credentials
       ansible.builtin.set_fact:
         credentials_file: "{{ creds_find.files[0].path }}"
-        tunnel_info: "{{ creds_slurp.content | b64decode | from_json }}"
-        tunnel_name: "{{ creds_slurp.content | b64decode | from_json | json_query('TunnelName') }}"
         tunnel_id: "{{ creds_slurp.content | b64decode | from_json | json_query('TunnelID') }}"
 
     - name: Load routes configuration
