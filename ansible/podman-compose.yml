@@ -40,12 +40,13 @@ services:
             - "9119:9119" # Dashboard
         volumes:
             - ~/.hermes:/opt/data
+        env_file:
+            - /opt/services/.env
         environment:
             - HERMES_DASHBOARD=1
             - HERMES_DASHBOARD_TUI=1
             - API_SERVER_ENABLED=true
             - API_SERVER_HOST=0.0.0.0
-            - API_SERVER_KEY=${HERMES_API_KEY:-changeme}
             - API_SERVER_CORS_ORIGINS=*
         restart: unless-stopped
         deploy:
