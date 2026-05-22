@@ -2,7 +2,6 @@
 # Cloudflare Tunnel setup for self-hosted services
 - name: Configure Cloudflare Tunnel
   hosts: ubuntu_servers
-  become: true
   vars:
     cloudflared_dir: "/home/{{ ansible_user }}/.cloudflared"
 
@@ -70,6 +69,7 @@
 
           [Install]
           WantedBy=multi-user.target
+      become: true
 
     - name: Enable and start cloudflared service
       ansible.builtin.systemd:
@@ -77,3 +77,4 @@
         state: restarted
         enabled: true
         daemon_reload: true
+      become: true
