@@ -33,7 +33,7 @@
 
     - name: Load routes configuration
       ansible.builtin.set_fact:
-        routes: "{{ lookup('ansible.builtin.file', playbook_dir + '/cloudflared/routes.yml') | from_yaml }}"
+        routes: "{{ lookup('ansible.builtin.file', playbook_dir + '/../cloudflared/routes.yml') | from_yaml }}"
 
     - name: Delete existing config if present
       ansible.builtin.file:
