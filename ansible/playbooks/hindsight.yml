@@ -55,6 +55,14 @@
           [Install]
           WantedBy=default.target
 
+    - name: Create systemd user wants directory
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
     - name: Enable Hindsight to start on boot
       ansible.builtin.file:
         src: "/home/{{ ansible_user }}/.config/systemd/user/hindsight.service"
