@@ -15,8 +15,6 @@ services:
       PUID: "1000"
       PGID: "1000"
       TZ: "America/Los_Angeles"
-      PASSWORD_ACCESS: "true"
-      USER_PASSWORD: "hermes"
       USER_NAME: "root"
     ports:
       - "127.0.0.1:2222:2222"
