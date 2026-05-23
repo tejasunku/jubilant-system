@@ -1,0 +1,61 @@
+---
+# Hermes setup playbook
+- name: Setup Hermes
+  hosts: ubuntu_servers
+  vars:
+    hermes_home: "/home/{{ ansible_user }}/.hermes"
+    hermes_repo_dir: "{{ hermes_home }}/hermes-agent"
+
+  tasks:
+    - name: Install Playwright system dependencies
+      ansible.builtin.shell:
+        cmd: npx playwright install-deps chromium
+      become: true
+
+    - name: Run Hermes installer
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+      environment:
+        HOME: "{{ hermes_home }}"
+
+    - name: Symlink hermes to system path
+      ansible.builtin.file:
+        src: "{{ hermes_repo_dir }}/venv/bin/hermes"
+        dest: /usr/local/bin/hermes
+        state: link
+      become: true
+
+    - name: Create systemd user service for Hermes
+      ansible.builtin.copy:
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/hermes.service"
+        content: |
+          [Unit]
+          Description=Hermes Agent
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/home/{{ ansible_user }}/.hermes/hermes-agent/venv/bin/hermes gateway
+          Restart=on-failure
+          RestartSec=5s
+          Environment="PATH=/home/{{ ansible_user }}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          Environment="HOME=/home/{{ ansible_user }}"
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Create systemd user wants directory
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Enable Hermes to start on boot
+      ansible.builtin.file:
+        src: "/home/{{ ansible_user }}/.config/systemd/user/hermes.service"
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants/hermes.service"
+        state: link
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
