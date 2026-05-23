@@ -1,0 +1,64 @@
+---
+# Hindsight setup playbook
+- name: Setup Hindsight
+  hosts: ubuntu_servers
+  vars:
+    repo_url: "https://github.com/tejasunku/jubilant-system.git"
+    repo_dir: "/home/{{ ansible_user }}/jubilant-system"
+    services_dir: "/opt/services"
+
+  tasks:
+    - name: Create services directory
+      ansible.builtin.file:
+        path: "{{ services_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Copy .env file to server
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../.env"
+        dest: "{{ services_dir }}/.env"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+
+    - name: Clone repository
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ repo_dir }}"
+        version: main
+
+    - name: Pull and start Hindsight
+      command:
+        cmd: podman compose -f "{{ repo_dir }}/ansible/podman-compose.yml" up -d
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+      become: true
+      become_user: "{{ ansible_user }}"
+
+    - name: Create systemd user service for Hindsight
+      ansible.builtin.copy:
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/hindsight.service"
+        content: |
+          [Unit]
+          Description=Hindsight AI Memory System
+          After=network.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/podman compose -f /home/{{ ansible_user }}/jubilant-system/ansible/podman-compose.yml up -d
+          ExecStop=/usr/bin/podman compose -f /home/{{ ansible_user }}/jubilant-system/ansible/podman-compose.yml down
+          RemainAfterExit=yes
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Enable Hindsight to start on boot
+      command:
+        cmd: systemctl --user enable hindsight.service
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/$(id -u)"
+      become: true
+      become_user: "{{ ansible_user }}"
