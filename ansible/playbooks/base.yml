@@ -7,17 +7,18 @@
     python_interpreter: /usr/bin/python3
 
   tasks:
+    - name: Add Cloudflare repository
+      ansible.builtin.shell:
+        cmd: |
+          mkdir -p --mode=0755 /usr/share/keyrings
+          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" > /etc/apt/sources.list.d/cloudflared.list
+        creates: /etc/apt/sources.list.d/cloudflared.list
+
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: yes
         cache_valid_time: 3600
-
-    - name: Add Cloudflare repository
-      ansible.builtin.shell:
-        cmd: |
-          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | gpg --dearmor -o /usr/share/keyrings/cloudflare-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/cloudflare-archive-keyring.gpg] https://pkg.cloudflare.com/cloudflared any main" > /etc/apt/sources.list.d/cloudflared.list
-        creates: /etc/apt/sources.list.d/cloudflared.list
 
     - name: Install common packages
       ansible.builtin.apt:
