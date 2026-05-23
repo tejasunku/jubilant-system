@@ -13,8 +13,15 @@
                 mkdir -p --mode=0755 /usr/share/keyrings
                 curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
                 echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" > /etc/apt/sources.list.d/cloudflared.list
-                sudo apt-get update
             creates: /etc/apt/sources.list.d/cloudflared.list
+
+      - name: Add Podman repository
+        ansible.builtin.shell:
+            cmd: |
+                . /etc/os-release
+                echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+                curl -fsSL https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key | gpg --dearmor -o /etc/apt/trusted.gpg.d/kubic.gpg
+            creates: /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 
       - name: Update apt cache
         ansible.builtin.apt:
@@ -30,6 +37,7 @@
                 - vim
                 - htop
                 - cloudflared
+                - podman
             state: present
 
       - name: Create admin user
@@ -39,3 +47,16 @@
             append: yes
             shell: /bin/bash
         when: ansible_user != 'admin'
+
+      - name: Enable linger for admin user (allows user services without login)
+        ansible.builtin.shell:
+            cmd: loginctl enable-linger admin
+        become: true
+
+      - name: Create systemd user directory for admin
+        ansible.builtin.file:
+            path: /home/{{ ansible_user }}/.config/systemd/user
+            state: directory
+            owner: "{{ ansible_user }}"
+            group: "{{ ansible_user }}"
+            mode: '0755'
