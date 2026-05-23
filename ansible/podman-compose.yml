@@ -45,6 +45,8 @@ services:
         environment:
             - HERMES_DASHBOARD=1
             - HERMES_DASHBOARD_TUI=1
+            - HERMES_UID=1000
+            - HERMES_GID=1000
             - API_SERVER_ENABLED=true
             - API_SERVER_HOST=127.0.0.1
         restart: unless-stopped
