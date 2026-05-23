@@ -7,11 +7,6 @@
     hermes_repo_dir: "{{ hermes_home }}/hermes-agent"
 
   tasks:
-    - name: Install Playwright system dependencies
-      ansible.builtin.shell:
-        cmd: npx playwright install-deps chromium
-      become: true
-
     - name: Run Hermes installer
       ansible.builtin.shell:
         cmd: curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
