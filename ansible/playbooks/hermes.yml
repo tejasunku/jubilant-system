@@ -7,17 +7,12 @@
     hermes_repo_dir: "{{ hermes_home }}/hermes-agent"
 
   tasks:
-    - name: Install uv
-      ansible.builtin.shell:
-        cmd: curl -LsSf https://astral.sh/uv/install.sh | sh
-      environment:
-        HOME: "{{ hermes_home }}"
-
     - name: Symlink hermes to system path
       ansible.builtin.file:
         src: "{{ hermes_repo_dir }}/venv/bin/hermes"
         dest: /usr/local/bin/hermes
         state: link
+        force: true
       become: true
 
     - name: Create systemd user service for Hermes
