@@ -23,6 +23,12 @@
                 curl -fsSL https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key | gpg --dearmor -o /etc/apt/trusted.gpg.d/kubic.gpg
             creates: /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 
+      - name: Add NodeSource repository
+        ansible.builtin.shell:
+            cmd: |
+                curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+            creates: /etc/apt/sources.list.d/nodesource.list
+
       - name: Update apt cache
         ansible.builtin.apt:
             update_cache: yes
@@ -39,6 +45,7 @@
                 - cloudflared
                 - podman
                 - podman-compose
+                - nodejs
             state: present
 
       - name: Symlink docker to podman
