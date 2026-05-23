@@ -7,14 +7,6 @@
     hermes_repo_dir: "{{ hermes_home }}/hermes-agent"
 
   tasks:
-    - name: Symlink hermes to system path
-      ansible.builtin.file:
-        src: "{{ hermes_repo_dir }}/venv/bin/hermes"
-        dest: /usr/local/bin/hermes
-        state: link
-        force: true
-      become: true
-
     - name: Create systemd user service for Hermes
       ansible.builtin.copy:
         dest: "/home/{{ ansible_user }}/.config/systemd/user/hermes.service"
