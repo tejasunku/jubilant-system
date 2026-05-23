@@ -33,6 +33,23 @@
       become: true
       become_user: "{{ ansible_user }}"
 
+    - name: Start SSH service in container
+      command:
+        cmd: podman exec hermes-shell service ssh start
+      become: true
+      become_user: "{{ ansible_user }}"
+
+    - name: Update .env with SSH settings
+      ansible.builtin.lineinfile:
+        path: "/home/{{ ansible_user }}/.hermes/.env"
+        line: "{{ item.key }}={{ item.value }}"
+        create: true
+      with_dict:
+        TERMINAL_SSH_HOST: "127.0.0.1"
+        TERMINAL_SSH_PORT: "2222"
+        TERMINAL_SSH_USER: "root"
+        TERMINAL_SSH_KEY: "hermes"
+
     - name: Create systemd user service for shell container
       ansible.builtin.copy:
         dest: "/home/{{ ansible_user }}/.config/systemd/user/shell.service"
