@@ -32,7 +32,7 @@
         TERMINAL_SSH_HOST: "127.0.0.1"
         TERMINAL_SSH_PORT: "2222"
         TERMINAL_SSH_USER: "root"
-        TERMINAL_SSH_KEY: "hermes"
+        TERMINAL_SSH_KEY: ""
 
     - name: Create systemd user service for shell container
       ansible.builtin.copy:
