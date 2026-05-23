@@ -19,7 +19,7 @@
     - name: Allow established and related connections
       ansible.builtin.iptables:
         chain: INPUT
-        connection_state: RELATED,ESTABLISHED
+        ctstate: RELATED,ESTABLISHED
         jump: ACCEPT
 
     - name: Allow SSH (port 22)
