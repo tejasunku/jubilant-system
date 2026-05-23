@@ -5,6 +5,11 @@
   become: true
 
   tasks:
+    - name: Ensure netfilter-persistent is installed
+      ansible.builtin.apt:
+        name: netfilter-persistent
+        state: present
+
     - name: Set default INPUT policy to DROP
       ansible.builtin.iptables:
         chain: INPUT
@@ -32,10 +37,3 @@
     - name: Save iptables rules
       ansible.builtin.shell:
         cmd: netfilter-persistent save
-      ignore_errors: true
-
-    - name: Ensure netfilter-persistent is installed
-      ansible.builtin.apt:
-        name: netfilter-persistent
-        state: present
-      ignore_errors: true
