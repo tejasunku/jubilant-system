@@ -7,12 +7,6 @@
     hermes_repo_dir: "{{ hermes_home }}/hermes-agent"
 
   tasks:
-    - name: Run Hermes installer
-      ansible.builtin.shell:
-        cmd: curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
-      environment:
-        HOME: "{{ hermes_home }}"
-
     - name: Symlink hermes to system path
       ansible.builtin.file:
         src: "{{ hermes_repo_dir }}/venv/bin/hermes"
