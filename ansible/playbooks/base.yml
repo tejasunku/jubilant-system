@@ -42,10 +42,9 @@
             state: present
 
       - name: Install podman-compose
-        ansible.builtin.pip:
+        ansible.builtin.apt:
             name: podman-compose
-            executable: pip3
-        become: true
+            state: present
 
       - name: Create admin user
         ansible.builtin.user:
