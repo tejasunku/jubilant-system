@@ -10,11 +10,6 @@
         name: netfilter-persistent
         state: present
 
-    - name: Set default INPUT policy to DROP
-      ansible.builtin.iptables:
-        chain: INPUT
-        policy: DROP
-
     - name: Allow loopback interface
       ansible.builtin.iptables:
         chain: INPUT
@@ -33,6 +28,11 @@
         protocol: tcp
         destination_port: '22'
         jump: ACCEPT
+
+    - name: Set default INPUT policy to DROP
+      ansible.builtin.iptables:
+        chain: INPUT
+        policy: DROP
 
     - name: Save iptables rules
       ansible.builtin.shell:
