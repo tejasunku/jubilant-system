@@ -20,20 +20,7 @@
           - git
           - vim
           - htop
-          - ufw
         state: present
-
-    - name: Setup UFW default policies
-      community.general.ufw:
-        state: enabled
-        policy: deny
-
-    - name: Allow SSH through firewall
-      community.general.ufw:
-        rule: allow
-        direction: in
-        port: '22'
-        proto: tcp
 
     - name: Create admin user
       ansible.builtin.user:

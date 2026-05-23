@@ -1,0 +1,41 @@
+---
+# Firewall configuration for server security
+- name: Configure Firewall
+  hosts: ubuntu_servers
+  become: true
+
+  tasks:
+    - name: Set default INPUT policy to DROP
+      ansible.builtin.iptables:
+        chain: INPUT
+        policy: DROP
+
+    - name: Allow loopback interface
+      ansible.builtin.iptables:
+        chain: INPUT
+        in_interface: lo
+        jump: ACCEPT
+
+    - name: Allow established and related connections
+      ansible.builtin.iptables:
+        chain: INPUT
+        connection_state: RELATED,ESTABLISHED
+        jump: ACCEPT
+
+    - name: Allow SSH (port 22)
+      ansible.builtin.iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: '22'
+        jump: ACCEPT
+
+    - name: Save iptables rules
+      ansible.builtin.shell:
+        cmd: netfilter-persistent save
+      ignore_errors: true
+
+    - name: Ensure netfilter-persistent is installed
+      ansible.builtin.apt:
+        name: netfilter-persistent
+        state: present
+      ignore_errors: true
