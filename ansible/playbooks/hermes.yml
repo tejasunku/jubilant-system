@@ -13,15 +13,6 @@
       environment:
         HOME: "{{ hermes_home }}"
 
-    - name: Install Hermes
-      ansible.builtin.shell:
-        cmd: |
-            export PATH="$HOME/.local/bin:$PATH"
-            curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
-      environment:
-        HOME: "{{ hermes_home }}"
-        PATH: "{{ hermes_home }}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-
     - name: Symlink hermes to system path
       ansible.builtin.file:
         src: "{{ hermes_repo_dir }}/venv/bin/hermes"
