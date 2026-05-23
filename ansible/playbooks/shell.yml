@@ -21,24 +21,6 @@
       become: true
       become_user: "{{ ansible_user }}"
 
-    - name: Install openssh-server in container
-      command:
-        cmd: podman exec hermes-shell apt update && podman exec hermes-shell apt install -y openssh-server
-      become: true
-      become_user: "{{ ansible_user }}"
-
-    - name: Set root password
-      command:
-        cmd: podman exec hermes-shell bash -c "echo 'root:hermes' | chpasswd"
-      become: true
-      become_user: "{{ ansible_user }}"
-
-    - name: Start SSH service in container
-      command:
-        cmd: podman exec hermes-shell service ssh start
-      become: true
-      become_user: "{{ ansible_user }}"
-
     - name: Update .env with SSH settings
       ansible.builtin.lineinfile:
         path: "/home/{{ ansible_user }}/.hermes/.env"

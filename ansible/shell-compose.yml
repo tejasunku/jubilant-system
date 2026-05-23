@@ -2,22 +2,22 @@
 #
 # Usage:
 #   podman-compose -f ansible/shell-compose.yml up -d
-#   podman exec -it hermes-shell /bin/bash
+#   ssh root@127.0.0.1 -p 2222
 #
-# SSH from host: ssh root@<container-ip>
+# Default password: hermes
 
 services:
   shell:
-    image: docker.io/library/ubuntu:latest
+    image: docker.io/linuxserver/openssh-server
     container_name: hermes-shell
     pull_policy: missing
-    command: ["/bin/bash", "-c", "trap 'exit 0' SIGINT SIGTERM; sleep infinity"]
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "America/Los_Angeles"
+      PASSWORD_ACCESS: "true"
+      USER_PASSWORD: "hermes"
+      USER_NAME: "root"
     ports:
-      - "127.0.0.1:2222:22"
-    networks:
-      - shell-net
+      - "127.0.0.1:2222:2222"
     restart: unless-stopped
-
-networks:
-  shell-net:
-    driver: bridge
