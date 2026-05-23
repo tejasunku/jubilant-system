@@ -1,0 +1,21 @@
+# Shell Container - Interactive Ubuntu Shell
+#
+# Usage:
+#   podman-compose -f ansible/shell-compose.yml up -d
+#   podman exec -it hermes-shell /bin/bash
+
+services:
+  shell:
+    image: docker.io/library/ubuntu:latest
+    container_name: hermes-shell
+    pull_policy: always
+    command: ["/bin/bash", "-c", "trap 'exit 0' SIGINT SIGTERM; sleep infinity"]
+    volumes:
+      - shell-data:/home
+    restart: unless-stopped
+
+volumes:
+  shell-data:
+    driver: local
+    driver_opts:
+      size: 10GB

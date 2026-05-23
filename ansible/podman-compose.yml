@@ -10,13 +10,16 @@
 # Do NOT commit this file with actual API keys
 
 services:
-    hindsight:
-        image: ghcr.io/vectorize-io/hindsight:latest-slim
-        container_name: hindsight
-        pull_policy: always
-        ports:
-            - "127.0.0.1:8888:8888"
-            - "127.0.0.1:9999:9999"
-        env_file:
-            - /opt/services/.env
-        restart: unless-stopped
+  hindsight:
+    image: ghcr.io/vectorize-io/hindsight:latest-slim
+    container_name: hindsight
+    pull_policy: always
+    ports:
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:9999:9999"
+    env_file:
+      - /opt/services/.env
+    restart: unless-stopped
+
+volumes:
+  hindsight-data:

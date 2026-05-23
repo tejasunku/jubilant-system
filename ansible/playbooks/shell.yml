@@ -1,0 +1,55 @@
+---
+# Shell container setup playbook
+- name: Setup Shell Container
+  hosts: ubuntu_servers
+  vars:
+    repo_url: "https://github.com/tejasunku/jubilant-system.git"
+    repo_dir: "/home/{{ ansible_user }}/jubilant-system"
+
+  tasks:
+    - name: Clone repository
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ repo_dir }}"
+        version: main
+
+    - name: Create and start shell container
+      command:
+        cmd: podman compose -f "{{ repo_dir }}/ansible/shell-compose.yml" up -d
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+      become: true
+      become_user: "{{ ansible_user }}"
+
+    - name: Create systemd user service for shell container
+      ansible.builtin.copy:
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/shell.service"
+        content: |
+          [Unit]
+          Description=Shell Container
+          After=network.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/podman compose -f /home/{{ ansible_user }}/jubilant-system/ansible/shell-compose.yml up -d
+          ExecStop=/usr/bin/podman compose -f /home/{{ ansible_user }}/jubilant-system/ansible/shell-compose.yml down
+          RemainAfterExit=yes
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Create systemd user wants directory
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Enable shell container to start on boot
+      ansible.builtin.file:
+        src: "/home/{{ ansible_user }}/.config/systemd/user/shell.service"
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants/shell.service"
+        state: link
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
