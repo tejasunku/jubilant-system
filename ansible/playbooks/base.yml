@@ -38,7 +38,14 @@
                 - htop
                 - cloudflared
                 - podman
+                - python3-pip
             state: present
+
+      - name: Install podman-compose
+        ansible.builtin.pip:
+            name: podman-compose
+            executable: pip3
+        become: true
 
       - name: Create admin user
         ansible.builtin.user:
