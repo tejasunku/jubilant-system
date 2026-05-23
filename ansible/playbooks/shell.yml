@@ -24,9 +24,11 @@
     - name: Update .env with SSH settings
       ansible.builtin.lineinfile:
         path: "/home/{{ ansible_user }}/.hermes/.env"
+        regexp: "^{{ item.key }}="
         line: "{{ item.key }}={{ item.value }}"
         create: true
       with_dict:
+        TERMINAL_ENV: "ssh"
         TERMINAL_SSH_HOST: "127.0.0.1"
         TERMINAL_SSH_PORT: "2222"
         TERMINAL_SSH_USER: "root"
