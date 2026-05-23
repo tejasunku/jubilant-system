@@ -51,6 +51,8 @@
         cmd: "cloudflared tunnel route dns {{ tunnel_id }} {{ item.hostname }}"
       loop: "{{ routes.routes }}"
       ignore_errors: true
+      environment:
+        HOME: "/home/{{ ansible_user }}"
 
     - name: Create systemd service for cloudflared tunnel
       ansible.builtin.copy:

@@ -4,37 +4,38 @@
   hosts: ubuntu_servers
   become: true
   vars:
-    python_interpreter: /usr/bin/python3
+      python_interpreter: /usr/bin/python3
 
   tasks:
-    - name: Add Cloudflare repository
-      ansible.builtin.shell:
-        cmd: |
-          mkdir -p --mode=0755 /usr/share/keyrings
-          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
-          echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" > /etc/apt/sources.list.d/cloudflared.list
-        creates: /etc/apt/sources.list.d/cloudflared.list
+      - name: Add Cloudflare repository
+        ansible.builtin.shell:
+            cmd: |
+                mkdir -p --mode=0755 /usr/share/keyrings
+                curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+                echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" > /etc/apt/sources.list.d/cloudflared.list
+                sudo apt-get update
+            creates: /etc/apt/sources.list.d/cloudflared.list
 
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-        cache_valid_time: 3600
+      - name: Update apt cache
+        ansible.builtin.apt:
+            update_cache: yes
+            cache_valid_time: 3600
 
-    - name: Install common packages
-      ansible.builtin.apt:
-        name:
-          - curl
-          - wget
-          - git
-          - vim
-          - htop
-          - cloudflared
-        state: present
+      - name: Install common packages
+        ansible.builtin.apt:
+            name:
+                - curl
+                - wget
+                - git
+                - vim
+                - htop
+                - cloudflared
+            state: present
 
-    - name: Create admin user
-      ansible.builtin.user:
-        name: admin
-        groups: sudo
-        append: yes
-        shell: /bin/bash
-      when: ansible_user != 'admin'
+      - name: Create admin user
+        ansible.builtin.user:
+            name: admin
+            groups: sudo
+            append: yes
+            shell: /bin/bash
+        when: ansible_user != 'admin'
