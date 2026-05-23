@@ -56,9 +56,9 @@
           WantedBy=default.target
 
     - name: Enable Hindsight to start on boot
-      command:
-        cmd: systemctl --user enable hindsight.service
-      environment:
-        XDG_RUNTIME_DIR: "/run/user/$(id -u)"
-      become: true
-      become_user: "{{ ansible_user }}"
+      ansible.builtin.file:
+        src: "/home/{{ ansible_user }}/.config/systemd/user/hindsight.service"
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants/hindsight.service"
+        state: link
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
