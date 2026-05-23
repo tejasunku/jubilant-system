@@ -1,21 +1,21 @@
-# Shell Container - Interactive Ubuntu Shell
+# Shell Container - Persistent Ubuntu Shell for AI Agent
 #
 # Usage:
 #   podman-compose -f ansible/shell-compose.yml up -d
 #   podman exec -it hermes-shell /bin/bash
+#
+# SSH from host: ssh root@<container-ip>
 
 services:
   shell:
     image: docker.io/library/ubuntu:latest
     container_name: hermes-shell
-    pull_policy: always
+    pull_policy: missing
     command: ["/bin/bash", "-c", "trap 'exit 0' SIGINT SIGTERM; sleep infinity"]
-    volumes:
-      - shell-data:/home
+    networks:
+      - shell-net
     restart: unless-stopped
 
-volumes:
-  shell-data:
-    driver: local
-    driver_opts:
-      size: 10GB
+networks:
+  shell-net:
+    driver: bridge

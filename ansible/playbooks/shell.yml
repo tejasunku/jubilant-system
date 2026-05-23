@@ -21,6 +21,18 @@
       become: true
       become_user: "{{ ansible_user }}"
 
+    - name: Install openssh-server in container
+      command:
+        cmd: podman exec hermes-shell apt update && podman exec hermes-shell apt install -y openssh-server
+      become: true
+      become_user: "{{ ansible_user }}"
+
+    - name: Set root password
+      command:
+        cmd: podman exec hermes-shell bash -c "echo 'root:hermes' | chpasswd"
+      become: true
+      become_user: "{{ ansible_user }}"
+
     - name: Create systemd user service for shell container
       ansible.builtin.copy:
         dest: "/home/{{ ansible_user }}/.config/systemd/user/shell.service"
