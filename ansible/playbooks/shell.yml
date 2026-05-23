@@ -13,11 +13,38 @@
         dest: "{{ repo_dir }}"
         version: main
 
+    - name: Create .ssh directory
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/.ssh"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0700'
+
+    - name: Generate SSH key pair for shell access
+      community.crypto.openssh_keypair:
+        path: "/home/{{ ansible_user }}/.ssh/shell_key"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+        comment: "shell-container-access"
+        force: false
+
     - name: Create and start shell container
       command:
         cmd: podman compose -f "{{ repo_dir }}/ansible/shell-compose.yml" up -d
       environment:
         HOME: "/home/{{ ansible_user }}"
+      become: true
+      become_user: "{{ ansible_user }}"
+
+    - name: Wait for container to start
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Copy public key to container
+      command:
+        cmd: podman exec hermes-shell mkdir -p /root/.ssh && podman exec hermes-shell tee /root/.ssh/authorized_keys < /home/{{ ansible_user }}/.ssh/shell_key.pub
       become: true
       become_user: "{{ ansible_user }}"
 
@@ -32,7 +59,7 @@
         TERMINAL_SSH_HOST: "127.0.0.1"
         TERMINAL_SSH_PORT: "2222"
         TERMINAL_SSH_USER: "root"
-        TERMINAL_SSH_KEY: ""
+        TERMINAL_SSH_KEY: "/home/{{ ansible_user }}/.ssh/shell_key"
 
     - name: Create systemd user service for shell container
       ansible.builtin.copy:
