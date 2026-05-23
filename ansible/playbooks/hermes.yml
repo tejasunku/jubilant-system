@@ -44,7 +44,7 @@
 
           [Service]
           Type=simple
-          ExecStart=/home/{{ ansible_user }}/.hermes/hermes-agent/venv/bin/hermes dashboard --no-open --insecure --host 0.0.0.0
+          ExecStart=/home/{{ ansible_user }}/.hermes/hermes-agent/venv/bin/hermes dashboard --no-open --insecure --host 0.0.0.0 --tui
           Restart=on-failure
           RestartSec=5s
           Environment="PATH=/home/{{ ansible_user }}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
