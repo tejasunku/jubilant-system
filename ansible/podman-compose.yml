@@ -9,15 +9,6 @@
 # Environment variables are stored in /opt/services/.env
 # Do NOT commit this file with actual API keys
 
-# Hermes Agent - AI Agent with memory
-# https://hermes-agent.nousresearch.com/docs/user-guide/docker/
-#
-# Usage:
-#   1. Create ~/.hermes directory and run setup wizard on first start
-#   2. Configure API keys in ~/.hermes/.env
-#   3. Run: podman compose up -d
-#   4. Access dashboard at http://localhost:9119 (when HERMES_DASHBOARD=1)
-
 services:
     hindsight:
         image: ghcr.io/vectorize-io/hindsight:latest-slim
@@ -29,28 +20,3 @@ services:
         env_file:
             - /opt/services/.env
         restart: unless-stopped
-
-    hermes:
-        image: docker.io/nousresearch/hermes-agent:latest
-        container_name: hermes
-        pull_policy: always
-        command: gateway run
-        ports:
-            - "127.0.0.1:8642:8642"
-            - "127.0.0.1:9119:9119"
-        volumes:
-            - /home/admin/.hermes:/opt/data
-        env_file:
-            - /opt/services/.env
-        environment:
-            - HERMES_DASHBOARD=1
-            - HERMES_DASHBOARD_TUI=1
-            - HERMES_UID=1000
-            - HERMES_GID=1000
-            - API_SERVER_ENABLED=true
-            - API_SERVER_HOST=127.0.0.1
-        restart: unless-stopped
-        deploy:
-            limits:
-                memory: 4G
-                cpus: "2.0"
