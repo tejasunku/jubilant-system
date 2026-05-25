@@ -15,16 +15,11 @@ services:
       - "127.0.0.1:4096:4096"
     volumes:
       - /home/admin/opencode:/workspace
-      - opencode-config:/root/.config/opencode
-      - opencode-data:/root/.local/share/opencode
+      - /home/admin/opencode/config:/root/.config/opencode
+      - /home/admin/opencode/data:/root/.local/share/opencode
     environment:
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
       - OPENCODE_SERVER_USERNAME=admin
-      - OPENCODE_HOSTNAME=0.0.0.0
       - HOME=/root
     restart: unless-stopped
     network_mode: host
-
-volumes:
-  opencode-config:
-  opencode-data:
