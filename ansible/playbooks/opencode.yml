@@ -7,10 +7,8 @@
 
   tasks:
     - name: Enable lingering for user (allows systemd services at boot)
-      community.systemd.systemd:
-        name: loginctl
-        method: enable-linger
-        user: "{{ ansible_user }}"
+      ansible.builtin.shell:
+        cmd: loginctl enable-linger {{ ansible_user }}
       become: true
 
     - name: Create OpenCode directory
