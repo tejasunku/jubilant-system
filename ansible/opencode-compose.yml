@@ -8,7 +8,7 @@
 
 services:
   opencode:
-    image: smanx/opencode
+    image: docker.io/smanx/opencode
     container_name: opencode
     pull_policy: always
     ports:
@@ -16,7 +16,7 @@ services:
     volumes:
       - /home/admin/opencode:/workspace
       - /home/admin/opencode/.config/opencode:/root/.config/opencode
-      - /home/admin/opencode/.local/share/opencode:/root/.local/share/opencode
+      - /home/admin/opencode/.local:/root/.local
     environment:
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
       - OPENCODE_SERVER_USERNAME=admin
