@@ -32,21 +32,20 @@
         mode: '0600'
       no_log: true
 
-    - name: Pull OpenCode container image
-      community.docker.docker_image:
-        name: ghcr.io/anomalyco/opencode:latest
-        source: pull
-      become: true
+    - name: Remove existing OpenCode container if exists
+      ansible.builtin.shell:
+        cmd: podman rm -f opencode 2>/dev/null || true
       ignore_errors: true
 
-    - name: Start OpenCode container
-      community.docker.docker_compose_v2:
-        project_src: "{{ opencode_home }}"
-        files:
-          - opencode-compose.yml
-        state: present
+    - name: Pull OpenCode container image
+      ansible.builtin.shell:
+        cmd: podman pull ghcr.io/anomalyco/opencode:latest
       become: true
-      ignore_errors: true
+
+    - name: Start OpenCode container
+      ansible.builtin.shell:
+        cmd: cd {{ opencode_home }} && podman compose -f opencode-compose.yml up -d
+      become: true
 
     - name: Check OpenCode container status
       ansible.builtin.shell:
