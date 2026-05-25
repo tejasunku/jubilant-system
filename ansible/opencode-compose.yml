@@ -8,20 +8,23 @@
 
 services:
   opencode:
-    image: ghcr.io/anomalyco/opencode:latest
+    image: smanx/opencode
     container_name: opencode
     pull_policy: always
     ports:
       - "127.0.0.1:4096:4096"
     volumes:
-      - /home/admin/opencode:/opencode
+      - /home/admin/opencode:/workspace
+      - opencode-config:/root/.config/opencode
+      - opencode-data:/root/.local/share/opencode
     environment:
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
       - OPENCODE_SERVER_USERNAME=admin
-      - HOME=/opencode
-    working_dir: /opencode
-    command: web --port 4096 --hostname 0.0.0.0
+      - OPENCODE_HOSTNAME=0.0.0.0
+      - HOME=/root
     restart: unless-stopped
     network_mode: host
 
-volumes: ~
+volumes:
+  opencode-config:
+  opencode-data:
