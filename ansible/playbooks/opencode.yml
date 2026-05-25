@@ -41,6 +41,7 @@
       ansible.builtin.shell:
         cmd: podman rm -f opencode 2>/dev/null || true
       ignore_errors: true
+      when: false
 
     - name: Pull OpenCode container image
       ansible.builtin.shell:
