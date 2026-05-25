@@ -16,7 +16,7 @@
 
     - name: Copy OpenCode compose file
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/opencode-compose.yml"
+        src: "{{ playbook_dir }}/../opencode-compose.yml"
         dest: "{{ opencode_home }}/opencode-compose.yml"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
