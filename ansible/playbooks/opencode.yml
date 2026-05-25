@@ -1,0 +1,91 @@
+---
+# OpenCode setup playbook
+- name: Setup OpenCode
+  hosts: ubuntu_servers
+  vars:
+    opencode_home: "/opencode"
+
+  tasks:
+    - name: Stop Hermes systemd services
+      ansible.builtin.shell:
+        cmd: |
+          systemctl --user stop hermes.service hermes-dashboard.service 2>/dev/null || true
+          rm -f ~/.config/systemd/user/default.target.wants/hermes.service
+          rm -f ~/.config/systemd/user/default.target.wants/hermes-dashboard.service
+          rm -f ~/.config/systemd/user/hermes.service
+          rm -f ~/.config/systemd/user/hermes-dashboard.service
+        warn: false
+
+    - name: Stop any running Hermes processes
+      ansible.builtin.shell:
+        cmd: pkill -f hermes || true
+      ignore_errors: true
+
+    - name: Create OpenCode directory
+      ansible.builtin.file:
+        path: "{{ opencode_home }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Copy OpenCode compose file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/opencode-compose.yml"
+        dest: "{{ opencode_home }}/opencode-compose.yml"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+    - name: Ensure .env exists in opencode directory
+      ansible.builtin.copy:
+        dest: "{{ opencode_home }}/.env"
+        content: |
+          OPENCODE_SERVER_PASSWORD={{ opencode_password | default('opencode') }}
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+      no_log: true
+
+    - name: Pull OpenCode container image
+      community.docker.docker_image:
+        name: ghcr.io/anomalyco/opencode:latest
+        source: pull
+      become: true
+      ignore_errors: true
+
+    - name: Start OpenCode container
+      community.docker.docker_compose:
+        project_src: "{{ opencode_home }}"
+        files:
+          - opencode-compose.yml
+        state: present
+      become: true
+      async: 300
+      poll: 10
+      ignore_errors: true
+
+    - name: Create systemd user service for OpenCode
+      ansible.builtin.copy:
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/opencode.service"
+        content: |
+          [Unit]
+          Description=OpenCode AI Coding Agent
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/bin/podman compose -f {{ opencode_home }}/opencode-compose.yml up
+          Restart=on-failure
+          RestartSec=5s
+          Environment="HOME=/home/{{ ansible_user }}"
+
+          [Install]
+          WantedBy=default.target
+      when: false
+
+    - name: Check OpenCode container status
+      ansible.builtin.shell:
+        cmd: podman ps | grep opencode || echo "not running"
+      register: opencode_status
+      changed_when: false

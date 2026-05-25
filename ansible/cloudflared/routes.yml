@@ -6,7 +6,5 @@ routes:
     port: 8888
   - hostname: hindsight-console.tejasunku.com
     port: 9999
-  - hostname: hermes.tejasunku.com
-    port: 8642
-  - hostname: hermes-console.tejasunku.com
-    port: 9119
+  - hostname: opencode.tejasunku.com
+    port: 4096

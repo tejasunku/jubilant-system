@@ -1,0 +1,32 @@
+# OpenCode - AI Coding Agent
+# https://opencode.ai/
+#
+# Usage:
+#   1. Run: podman compose -f opencode-compose.yml up -d
+#   2. Access: http://localhost:4096 (web UI)
+#   3. Set password via OPENCODE_SERVER_PASSWORD in .env
+
+services:
+  opencode:
+    image: ghcr.io/anomalyco/opencode:latest
+    container_name: opencode
+    pull_policy: always
+    ports:
+      - "127.0.0.1:4096:4096"
+    volumes:
+      - opencode-data:/opencode
+    environment:
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
+      - OPENCODE_SERVER_USERNAME=admin
+      - HOME=/opencode
+    working_dir: /opencode
+    command: web --port 4096 --hostname 0.0.0.0
+    restart: unless-stopped
+
+volumes:
+  opencode-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opencode
