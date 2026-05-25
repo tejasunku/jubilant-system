@@ -6,6 +6,13 @@
     opencode_home: "/opencode"
 
   tasks:
+    - name: Enable lingering for user (allows systemd services at boot)
+      community.systemd.systemd:
+        name: loginctl
+        method: enable-linger
+        user: "{{ ansible_user }}"
+      become: true
+
     - name: Create OpenCode directory
       ansible.builtin.file:
         path: "{{ opencode_home }}"
@@ -42,7 +49,49 @@
         cmd: podman pull ghcr.io/anomalyco/opencode:latest
       become: true
 
-    - name: Start OpenCode container
+    - name: Generate systemd user service for OpenCode
+      ansible.builtin.shell:
+        cmd: |
+          mkdir -p ~/.config/systemd/user/
+          cd {{ opencode_home }} && podman compose generate-service opencode --user > ~/.config/systemd/user/opencode.service 2>/dev/null || echo "generate failed"
+      ignore_errors: true
+
+    - name: Create systemd user service for OpenCode (fallback if generate fails)
+      ansible.builtin.copy:
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/opencode.service"
+        content: |
+          [Unit]
+          Description=OpenCode AI Coding Agent
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/bin/podman compose -f {{ opencode_home }}/opencode-compose.yml up
+          Restart=on-failure
+          RestartSec=5s
+          Environment="HOME=/home/{{ ansible_user }}"
+
+          [Install]
+          WantedBy=default.target
+      when: false
+
+    - name: Create systemd user wants directory
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Enable OpenCode to start on boot
+      ansible.builtin.file:
+        src: "/home/{{ ansible_user }}/.config/systemd/user/opencode.service"
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants/opencode.service"
+        state: link
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Start OpenCode now
       ansible.builtin.shell:
         cmd: cd {{ opencode_home }} && podman compose -f opencode-compose.yml up -d
       become: true
