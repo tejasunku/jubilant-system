@@ -3,7 +3,7 @@
 - name: Setup OpenCode
   hosts: ubuntu_servers
   vars:
-    opencode_home: "/opencode"
+    opencode_home: "/home/{{ ansible_user }}/opencode"
 
   tasks:
     - name: Enable lingering for user (allows systemd services at boot)
@@ -45,7 +45,6 @@
     - name: Pull OpenCode container image
       ansible.builtin.shell:
         cmd: podman pull ghcr.io/anomalyco/opencode:latest
-      become: true
 
     - name: Create systemd user service for OpenCode
       ansible.builtin.copy:
@@ -84,7 +83,6 @@
     - name: Start OpenCode now
       ansible.builtin.shell:
         cmd: cd {{ opencode_home }} && podman compose -f opencode-compose.yml up -d
-      become: true
 
     - name: Check OpenCode container status
       ansible.builtin.shell:
