@@ -47,14 +47,7 @@
         cmd: podman pull ghcr.io/anomalyco/opencode:latest
       become: true
 
-    - name: Generate systemd user service for OpenCode
-      ansible.builtin.shell:
-        cmd: |
-          mkdir -p ~/.config/systemd/user/
-          cd {{ opencode_home }} && podman compose generate-service opencode --user > ~/.config/systemd/user/opencode.service 2>/dev/null || echo "generate failed"
-      ignore_errors: true
-
-    - name: Create systemd user service for OpenCode (fallback if generate fails)
+    - name: Create systemd user service for OpenCode
       ansible.builtin.copy:
         dest: "/home/{{ ansible_user }}/.config/systemd/user/opencode.service"
         content: |
@@ -71,7 +64,6 @@
 
           [Install]
           WantedBy=default.target
-      when: false
 
     - name: Create systemd user wants directory
       ansible.builtin.file:
