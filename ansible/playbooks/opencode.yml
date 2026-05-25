@@ -37,12 +37,6 @@
         mode: '0600'
       no_log: true
 
-    - name: Remove existing OpenCode container if exists
-      ansible.builtin.shell:
-        cmd: podman rm -f opencode 2>/dev/null || true
-      ignore_errors: true
-      when: false
-
     - name: Pull OpenCode container image
       ansible.builtin.shell:
         cmd: podman pull ghcr.io/anomalyco/opencode:latest
