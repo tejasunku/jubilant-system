@@ -16,7 +16,9 @@ services:
     volumes:
       - /home/admin/opencode:/workspace
       - /home/admin/opencode/.config/opencode:/root/.config/opencode
-      - /home/admin/opencode/.local:/root/.local
+      - /home/admin/opencode/.local/share/opencode:/root/.local/share/opencode
+      - /home/admin/opencode/.local/state/opencode:/root/.local/state/opencode
+      - /home/admin/opencode/.cache/opencode:/root/.cache/opencode
     environment:
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
       - OPENCODE_SERVER_USERNAME=admin
