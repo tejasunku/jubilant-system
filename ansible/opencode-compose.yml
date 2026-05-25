@@ -22,6 +22,10 @@ services:
     working_dir: /opencode
     command: web --port 4096 --hostname 0.0.0.0
     restart: unless-stopped
+    privileged: true
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
 
 volumes:
   opencode-data:
