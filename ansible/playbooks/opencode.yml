@@ -40,14 +40,12 @@
       ignore_errors: true
 
     - name: Start OpenCode container
-      community.docker.docker_compose:
+      community.docker.docker_compose_v2:
         project_src: "{{ opencode_home }}"
         files:
           - opencode-compose.yml
         state: present
       become: true
-      async: 300
-      poll: 10
       ignore_errors: true
 
     - name: Check OpenCode container status
