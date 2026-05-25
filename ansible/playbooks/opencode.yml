@@ -81,6 +81,8 @@
           cd {{ opencode_home }} && \
           podman compose -f opencode-compose.yml down || true && \
           podman compose -f opencode-compose.yml up -d
+      become: true
+      become_user: "{{ ansible_user }}"
 
     - name: Check OpenCode container status
       ansible.builtin.shell:
