@@ -83,7 +83,10 @@
 
     - name: Start OpenCode now
       ansible.builtin.shell:
-        cmd: cd {{ opencode_home }} && podman compose -f opencode-compose.yml up -d
+        cmd: |
+          cd {{ opencode_home }} && \
+          podman compose -f opencode-compose.yml down || true && \
+          podman compose -f opencode-compose.yml up -d
 
     - name: Check OpenCode container status
       ansible.builtin.shell:
