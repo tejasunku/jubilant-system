@@ -20,6 +20,6 @@ services:
     environment:
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
       - OPENCODE_SERVER_USERNAME=admin
-      - HOME=/root
+      - HOME=/workspace
     restart: unless-stopped
     network_mode: host
