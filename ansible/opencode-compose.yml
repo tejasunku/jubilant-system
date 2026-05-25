@@ -14,7 +14,7 @@ services:
     ports:
       - "127.0.0.1:4096:4096"
     volumes:
-      - /opencode:/opencode
+      - /home/admin/opencode:/opencode
     environment:
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
       - OPENCODE_SERVER_USERNAME=admin
