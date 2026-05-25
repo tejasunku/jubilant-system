@@ -55,6 +55,8 @@
           Restart=on-failure
           RestartSec=5s
           Environment="HOME=/home/{{ ansible_user }}"
+          User={{ ansible_user }}
+          Group={{ ansible_user }}
 
           [Install]
           WantedBy=default.target
