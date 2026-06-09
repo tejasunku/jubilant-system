@@ -2,7 +2,7 @@ FROM docker.io/smanx/opencode:latest
 
 USER root
 
-# Install Node.js 22 and bun for oh-my-opencode-slim compatibility
+# Install Node.js 22 and bun
 RUN apt-get update && \
     apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
@@ -10,7 +10,5 @@ RUN apt-get update && \
     curl -fsSL https://bun.sh/install | bash && \
     rm -rf /var/lib/apt/lists/*
 
-ENV PATH="/root/.local/bin:$PATH"
-
 # Install oh-my-opencode-slim with opencode-go preset (non-tui mode)
-RUN bunx oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes
+RUN /root/.local/bin/bunx oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes
