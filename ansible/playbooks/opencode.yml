@@ -92,10 +92,6 @@
       register: opencode_status
       changed_when: false
 
-    - name: Install oh-my-opencode-slim with opencode-go preset
+    - name: Install oh-my-opencode-slim with opencode-go preset (non-tui mode)
       ansible.builtin.shell:
-        cmd: npx oh-my-opencode-slim@latest install --preset=opencode-go
-      become: true
-      become_user: "{{ ansible_user }}"
-      environment:
-        HOME: "/home/{{ ansible_user }}"
+        cmd: podman exec opencode bash -c "npx oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes"
