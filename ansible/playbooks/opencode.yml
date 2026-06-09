@@ -30,7 +30,7 @@
     - name: Copy OpenCode Dockerfile
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/../opencode.Dockerfile"
-        dest: "{{ opencode_home }}/opencode.Dockerfile"
+        dest: "{{ opencode_home }}/Dockerfile"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: '0644'
@@ -44,10 +44,6 @@
         group: "{{ ansible_user }}"
         mode: '0600'
       no_log: true
-
-    - name: Build OpenCode container image
-      ansible.builtin.shell:
-        cmd: cd {{ opencode_home }} && podman build -t opencode-custom:latest .
 
     - name: Create systemd user service for OpenCode
       ansible.builtin.copy:

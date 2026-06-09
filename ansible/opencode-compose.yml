@@ -8,8 +8,11 @@
 
 services:
   opencode:
-    image: opencode-custom:latest
+    image: localhost/opencode-custom:latest
     container_name: opencode
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "127.0.0.1:4096:4096"
     volumes:
