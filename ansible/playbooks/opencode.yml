@@ -94,7 +94,7 @@
 
     - name: Install oh-my-opencode-slim with opencode-go preset
       ansible.builtin.shell:
-        cmd: bunx oh-my-opencode-slim@latest install --preset=opencode-go
+        cmd: npx oh-my-opencode-slim@latest install --preset=opencode-go
       become: true
       become_user: "{{ ansible_user }}"
       environment:
