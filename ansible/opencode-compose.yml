@@ -11,6 +11,7 @@ services:
     image: docker.io/smanx/opencode:latest
     container_name: opencode
     pull_policy: always
+    command: bash -c "apt-get update && apt-get install -y npm && opencode web --port 4096 --hostname 0.0.0.0"
     ports:
       - "127.0.0.1:4096:4096"
     volumes:
