@@ -11,4 +11,4 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install oh-my-opencode-slim with opencode-go preset (non-tui mode)
-RUN /root/.local/bin/bunx oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes
+RUN ~/.bun/bin/bunx oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes
