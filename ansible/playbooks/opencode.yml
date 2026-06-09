@@ -91,7 +91,3 @@
         cmd: podman ps | grep opencode || echo "not running"
       register: opencode_status
       changed_when: false
-
-    - name: Install oh-my-opencode-slim with opencode-go preset (non-tui mode)
-      ansible.builtin.shell:
-        cmd: podman exec opencode bash -c "npx oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes"
