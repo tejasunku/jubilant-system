@@ -91,3 +91,11 @@
         cmd: podman ps | grep opencode || echo "not running"
       register: opencode_status
       changed_when: false
+
+    - name: Install oh-my-opencode-slim with opencode-go preset
+      ansible.builtin.shell:
+        cmd: bunx oh-my-opencode-slim@latest install --preset=opencode-go
+      become: true
+      become_user: "{{ ansible_user }}"
+      environment:
+        HOME: "/home/{{ ansible_user }}"
