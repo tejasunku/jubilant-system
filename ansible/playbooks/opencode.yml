@@ -19,10 +19,18 @@
         group: "{{ ansible_user }}"
         mode: '0755'
 
-    - name: Copy OpenCode compose file
+    - name: Copy OpenCode compose file and Dockerfile
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/../opencode-compose.yml"
         dest: "{{ opencode_home }}/opencode-compose.yml"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+    - name: Copy OpenCode Dockerfile
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../opencode.Dockerfile"
+        dest: "{{ opencode_home }}/opencode.Dockerfile"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: '0644'
@@ -37,9 +45,9 @@
         mode: '0600'
       no_log: true
 
-    - name: Pull OpenCode container image
+    - name: Build OpenCode container image
       ansible.builtin.shell:
-        cmd: podman pull ghcr.io/anomalyco/opencode:latest
+        cmd: cd {{ opencode_home }} && podman build -t opencode-custom:latest .
 
     - name: Create systemd user service for OpenCode
       ansible.builtin.copy:

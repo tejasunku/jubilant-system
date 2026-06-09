@@ -8,9 +8,7 @@
 
 services:
   opencode:
-    build:
-      context: .
-      dockerfile: opencode.Dockerfile
+    image: opencode-custom:latest
     container_name: opencode
     ports:
       - "127.0.0.1:4096:4096"
