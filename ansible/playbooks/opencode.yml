@@ -55,7 +55,7 @@
 
           [Service]
           Type=simple
-          ExecStart=/usr/bin/podman compose -f {{ opencode_home }}/opencode-compose.yml up
+          ExecStart=/usr/bin/podman compose -f {{ opencode_home }}/opencode-compose.yml up -d --build
           Restart=on-failure
           RestartSec=5s
           Environment="HOME=/home/{{ ansible_user }}"
@@ -86,7 +86,7 @@
         cmd: |
           cd {{ opencode_home }} && \
           podman compose -f opencode-compose.yml down || true && \
-          podman compose -f opencode-compose.yml up -d
+          podman compose -f opencode-compose.yml up -d --build
       become: true
       become_user: "{{ ansible_user }}"
 
