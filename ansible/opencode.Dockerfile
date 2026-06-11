@@ -10,5 +10,7 @@ RUN apt-get update && \
     curl -fsSL https://bun.sh/install | bash && \
     rm -rf /var/lib/apt/lists/*
 
+ENV PATH="/root/.bun/bin:${PATH}"
+
 # Install oh-my-opencode-slim with opencode-go preset (non-tui mode)
-RUN ~/.bun/bin/bunx oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes
+RUN bun x oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes
