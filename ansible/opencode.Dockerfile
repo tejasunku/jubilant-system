@@ -11,6 +11,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/root/.bun/bin:${PATH}"
+ENV HOME=/workspace
 
 # Install oh-my-opencode-slim with opencode-go preset (non-tui mode)
-RUN bun x oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes
+RUN mkdir -p /workspace/.config/opencode && \
+    bun x oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes
