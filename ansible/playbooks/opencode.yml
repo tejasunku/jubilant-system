@@ -35,15 +35,13 @@
         group: "{{ ansible_user }}"
         mode: '0644'
 
-    - name: Ensure .env exists in opencode directory
+    - name: Copy .env to OpenCode directory
       ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../.env"
         dest: "{{ opencode_home }}/.env"
-        content: |
-          OPENCODE_SERVER_PASSWORD={{ opencode_password | default('opencode') }}
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: '0600'
-      no_log: true
 
     - name: Create systemd user service for OpenCode
       ansible.builtin.copy:
