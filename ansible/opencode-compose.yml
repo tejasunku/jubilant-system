@@ -21,5 +21,6 @@ services:
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
       - OPENCODE_SERVER_USERNAME=admin
       - HOME=/workspace
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
     restart: unless-stopped
     network_mode: host

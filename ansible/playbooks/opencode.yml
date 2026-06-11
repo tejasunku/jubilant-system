@@ -90,6 +90,16 @@
       become: true
       become_user: "{{ ansible_user }}"
 
+    - name: Install oh-my-opencode-slim
+      ansible.builtin.shell:
+        cmd: |
+          podman exec opencode bun x oh-my-opencode-slim@latest install \
+            --preset=opencode-go --no-tui --skills=yes
+      become: true
+      become_user: "{{ ansible_user }}"
+      register: ohmyopencode_install
+      changed_when: "'Installed' in ohmyopencode_install.stdout"
+
     - name: Check OpenCode container status
       ansible.builtin.shell:
         cmd: podman ps | grep opencode || echo "not running"
