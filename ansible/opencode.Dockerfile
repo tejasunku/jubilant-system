@@ -23,5 +23,7 @@ RUN apt-get update && \
 
 ENV PATH="/root/.bun/bin:${PATH}"
 
+RUN mkdir -p /run/podman
+
 # Pre-install oh-my-opencode-slim so it's available without download
 RUN bun x oh-my-opencode-slim@latest --version 2>/dev/null || true
