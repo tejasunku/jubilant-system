@@ -18,7 +18,7 @@ RUN apt-get update && \
     apt-get update && \
     apt-get install -y gh && \
     # podman-remote for container self-management
-    apt-get install -y podman || true && \
+    apt-get install -y podman tmux || true && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/root/.bun/bin:${PATH}"
