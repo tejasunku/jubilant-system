@@ -33,6 +33,38 @@ This directory contains Ansible playbooks and configuration to manage the Ubuntu
    ansible-playbook playbooks/base.yml
    ```
 
+## OpenCode Hot-Reload Setup
+
+The OpenCode container is configured for hot-reloading:
+
+- **Config directory** (`~/.config/opencode`) is bind-mounted into the container. Edit plugins, MCP servers, and settings on the host — changes are live immediately.
+- **Podman socket** is mounted so the agent can restart the container after installing new tools.
+- **Restart script** is available at `/opt/scripts/restart-opencode.sh` inside the container.
+
+### How it works
+
+1. **Config changes**: Edit files in `~/.config/opencode/` on the host. opencode watches this directory and picks up changes automatically.
+
+2. **Installing packages**: The agent can `npm install`, `bun add`, etc. inside the container. To make new binaries available on `PATH`, restart the container:
+   ```bash
+   # From inside the container:
+   /opt/scripts/restart-opencode.sh
+   # Or directly:
+   podman restart opencode
+   ```
+
+3. **First-time setup**: After initial deploy, run oh-my-opencode-slim inside the container:
+   ```bash
+   podman exec opencode bun x oh-my-opencode-slim@latest install --preset=opencode-go --no-tui --skills=yes
+   ```
+
+4. **Reset workspace**: If the agent messes up the workspace, just recreate:
+   ```bash
+   podman stop opencode
+   podman rm opencode
+   podman compose -f ~/opencode/opencode-compose.yml up -d --build
+   ```
+
 ## Security Notes
 
 - **NEVER commit `inventory.ini`** - it contains server IPs and credentials
@@ -43,9 +75,18 @@ This directory contains Ansible playbooks and configuration to manage the Ubuntu
 
 ```
 ansible/
-├── ansible.cfg           # Ansible configuration
-├── inventory.ini.example # Template for inventory (safe to commit)
+├── ansible.cfg                # Ansible configuration
+├── inventory.ini.example      # Template for inventory (safe to commit)
+├── opencode-compose.yml       # Container compose with hot-reload mounts
+├── opencode.Dockerfile        # Container image (tools only, config is mounted)
+├── scripts/
+│   └── restart-opencode.sh    # Agent-callable restart helper
 ├── playbooks/
-│   └── base.yml          # Basic server setup playbook
+│   ├── base.yml               # Base server setup
+│   ├── cloudflared.yml        # Cloudflare tunnel setup
+│   ├── firewall.yml           # Firewall rules
+│   ├── hindsight.yml          # Hindsight AI memory setup
+│   ├── opencode.yml           # OpenCode container deployment
+│   └── shell.yml              # Shell container setup
 └── README.md
 ```

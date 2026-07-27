@@ -16,11 +16,20 @@ services:
     ports:
       - "127.0.0.1:4096:4096"
     volumes:
+      # Workspace - agent's working directory
       - /home/admin/opencode:/workspace
+      # Config - hot-reloadable, persists across rebuilds
+      - /home/admin/.config/opencode:/workspace/.config/opencode:Z
+      # Podman socket - allows agent to restart itself
+      - /run/user/${UID:-1000}/podman/podman.sock:/run/podman/podman.sock:Z
+      # Restart helper script
+      - /home/admin/scripts:/opt/scripts:ro,Z
     environment:
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
       - OPENCODE_SERVER_USERNAME=admin
       - HOME=/workspace
       - GITHUB_TOKEN=${GITHUB_TOKEN}
+      # Tell podman to use the mounted socket (acts as podman-remote)
+      - CONTAINER_HOST=unix:///run/podman/podman.sock
     restart: unless-stopped
     network_mode: host

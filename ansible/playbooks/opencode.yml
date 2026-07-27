@@ -4,6 +4,8 @@
   hosts: ubuntu_servers
   vars:
     opencode_home: "/home/{{ ansible_user }}/opencode"
+    opencode_config: "/home/{{ ansible_user }}/.config/opencode"
+    scripts_dir: "/home/{{ ansible_user }}/scripts"
 
   tasks:
     - name: Enable lingering for user (allows systemd services at boot)
@@ -15,6 +17,30 @@
       ansible.builtin.file:
         path: "{{ opencode_home }}"
         state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Create OpenCode config directory (bind-mounted into container)
+      ansible.builtin.file:
+        path: "{{ opencode_config }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Create scripts directory
+      ansible.builtin.file:
+        path: "{{ scripts_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Copy restart-opencode helper script
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../scripts/restart-opencode.sh"
+        dest: "{{ scripts_dir }}/restart-opencode.sh"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: '0755'
@@ -87,16 +113,6 @@
           podman compose -f opencode-compose.yml up -d --build
       become: true
       become_user: "{{ ansible_user }}"
-
-    - name: Install oh-my-opencode-slim
-      ansible.builtin.shell:
-        cmd: |
-          podman exec opencode bun x oh-my-opencode-slim@latest install \
-            --preset=opencode-go --no-tui --skills=yes
-      become: true
-      become_user: "{{ ansible_user }}"
-      register: ohmyopencode_install
-      changed_when: "'Installed' in ohmyopencode_install.stdout"
 
     - name: Check OpenCode container status
       ansible.builtin.shell:
