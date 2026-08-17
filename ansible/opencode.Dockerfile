@@ -29,7 +29,7 @@ RUN mkdir -p /run/podman
 RUN curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
 
 # Add elan to PATH for all shells
-ENV PATH="/root/.elan/bin:${PATH}"
+ENV PATH="${HOME}/.elan/bin:${PATH}"
 
 # Pre-install oh-my-opencode-slim so it's available without download
 RUN bun x oh-my-opencode-slim@latest --version 2>/dev/null || true
