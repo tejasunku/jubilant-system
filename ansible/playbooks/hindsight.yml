@@ -1,5 +1,10 @@
 ---
 # Hindsight setup playbook
+#
+# IMPORTANT: env_file changes (model, API keys, etc.) require container recreation,
+# not just restart. This playbook does `down` + `up` to ensure fresh env.
+# After initial setup, use: podman compose down && podman compose up -d
+# to apply .env changes. `podman restart hindsight` won't pick up env changes.
 - name: Setup Hindsight
   hosts: ubuntu_servers
   vars:
@@ -30,6 +35,15 @@
         dest: "{{ repo_dir }}"
         version: main
 
+    - name: Stop existing Hindsight container (if running)
+      command:
+        cmd: podman compose -f "{{ repo_dir }}/ansible/podman-compose.yml" down
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+      become: true
+      become_user: "{{ ansible_user }}"
+      ignore_errors: true
+
     - name: Pull and start Hindsight
       command:
         cmd: podman compose -f "{{ repo_dir }}/ansible/podman-compose.yml" up -d
@@ -47,10 +61,11 @@
           After=network.target
 
           [Service]
-          Type=oneshot
-          ExecStart=/usr/bin/podman compose -f /home/{{ ansible_user }}/jubilant-system/ansible/podman-compose.yml up -d
+          Type=simple
+          ExecStart=/usr/bin/podman compose -f /home/{{ ansible_user }}/jubilant-system/ansible/podman-compose.yml up
           ExecStop=/usr/bin/podman compose -f /home/{{ ansible_user }}/jubilant-system/ansible/podman-compose.yml down
-          RemainAfterExit=yes
+          Restart=on-failure
+          RestartSec=10
 
           [Install]
           WantedBy=default.target
