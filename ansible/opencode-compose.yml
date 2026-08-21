@@ -4,7 +4,6 @@
 # Usage:
 #   1. Run: podman compose -f opencode-compose.yml up -d
 #   2. Access: http://localhost:4096 (web UI)
-#   3. Set password via OPENCODE_SERVER_PASSWORD in .env
 
 services:
   opencode:
@@ -25,8 +24,6 @@ services:
       # Restart helper script
       - /home/admin/scripts:/opt/scripts:ro,Z
     environment:
-      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-opencode}
-      - OPENCODE_SERVER_USERNAME=admin
       - HOME=/workspace
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       # Tell podman to use the mounted socket (acts as podman-remote)
