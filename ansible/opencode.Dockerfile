@@ -31,5 +31,17 @@ RUN curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -
 # Add elan to PATH for all shells
 ENV PATH="${HOME}/.elan/bin:${PATH}"
 
+# Install uv (Astral's Python package/project manager) — single static binary at /usr/local/bin/uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    mv /root/.local/bin/uv /usr/local/bin/uv && \
+    mv /root/.local/bin/uvx /usr/local/bin/uvx
+
+# Install zotkit (headless Zotero CLI, https://github.com/oldantique/zotkit) as a uv tool
+# so `zotkit` is on PATH for the agent. Config still comes from .env / $ZOTKIT_ENV at runtime.
+RUN uv tool install zotkit
+
 # Pre-install oh-my-opencode-slim so it's available without download
 RUN bun x oh-my-opencode-slim@latest --version 2>/dev/null || true
+
+# Smoke-test zotkit install (will fail without ZOTERO_* env, but the binary must resolve)
+RUN zotkit --version || true

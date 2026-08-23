@@ -28,5 +28,12 @@ services:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       # Tell podman to use the mounted socket (acts as podman-remote)
       - CONTAINER_HOST=unix:///run/podman/podman.sock
+      # zotkit (https://github.com/oldantique/zotkit) — set in .env, consumed via $ZOTKIT_ENV / auto-discovery
+      - ZOTERO_LIBRARY_ID=${ZOTERO_LIBRARY_ID}
+      - ZOTERO_API_KEY=${ZOTERO_API_KEY}
+      - WEBDAV_URL=${WEBDAV_URL}
+      - WEBDAV_USERNAME=${WEBDAV_USERNAME}
+      - WEBDAV_PASSWORD=${WEBDAV_PASSWORD}
+      - ZOTKIT_MAILTO=${ZOTKIT_MAILTO}
     restart: unless-stopped
     network_mode: host
