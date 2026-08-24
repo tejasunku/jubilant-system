@@ -34,5 +34,7 @@ services:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       # Tell podman to use the mounted socket (acts as podman-remote)
       - CONTAINER_HOST=unix:///run/podman/podman.sock
+      # zotkit config path (independent of cwd — agents often run from /)
+      - ZOTKIT_ENV=/workspace/.env
     restart: unless-stopped
     network_mode: host
