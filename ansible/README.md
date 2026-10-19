@@ -125,6 +125,37 @@ Run `/mcp-adapter setup` (or `/mcp`) inside Pi to add servers, then restart the
 Pi service. `~/.config/mcp/mcp.json` is also supported upstream but that path is
 not mounted, so prefer `~/.pi/agent/mcp.json`.
 
+### Persistence
+
+These host paths are bind-mounted and survive container rebuilds:
+
+- `~/.pi` — sessions, settings, `auth.json`, `mcp.json`, `models.json`, skills, and installed Pi packages/plugins
+- `~/.pi-web` — PI WEB data, including sessions kept alive across reloads
+- `~/.hindsight` — Hindsight integration config
+- `~/.config/pi-web/config.json`
+- `~/workspace` and `~/jubilant-system` — your projects
+
+Container-local paths (`~/.cache`, `~/.npm`, `~/.local`, `~/.ssh`, `~/.gitconfig`)
+are **not** mounted and are lost when the container is recreated. Keep work under
+`/workspace` or `/home/admin/jubilant-system`; those are also the only paths in
+`pathAccess.allowedPaths`. Git access uses `GITHUB_TOKEN` from `~/pi/.env`, not
+host SSH keys.
+
+### Model providers
+
+Inside PI WEB, run `/login` in a Pi session to pick a provider; the credential is
+stored in `~/.pi/agent/auth.json` (persisted). Use `/model` to select a model and
+`Ctrl+S` to save it as the default. Alternatively, set the provider's environment
+variable (for example `OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY`) in
+`~/pi/.env` and recreate the containers:
+
+```bash
+podman compose -f ~/pi/pi-compose.yml up -d --force-recreate
+```
+
+Stored `auth.json` credentials take precedence over environment variables.
+Custom or OpenAI-compatible endpoints belong in `~/.pi/agent/models.json`.
+
 After deployment, open the UI, complete `/login` for your model provider, and
 select a working directory under `/workspace` or `/home/admin/jubilant-system`.
 Plugin changes are persisted under `~/.pi`; restart the Pi service after changing
