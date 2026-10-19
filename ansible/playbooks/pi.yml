@@ -1,0 +1,174 @@
+---
+# Pi Coding Agent + PI WEB setup
+- name: Setup Pi
+  hosts: ubuntu_servers
+  vars:
+    pi_home: "/home/{{ ansible_user }}/pi"
+    pi_workspace: "/home/{{ ansible_user }}/workspace"
+    pi_config_dir: "/home/{{ ansible_user }}/.config/pi-web"
+
+  tasks:
+    - name: Enable lingering for user (allows systemd services at boot)
+      ansible.builtin.shell:
+        cmd: loginctl enable-linger {{ ansible_user }}
+      become: true
+
+    - name: Ensure deploy user matches the container user (UID/GID 1000)
+      ansible.builtin.assert:
+        that:
+          - ansible_user_uid == 1000
+          - ansible_user_gid == 1000
+        fail_msg: >-
+          The Pi container runs as UID/GID 1000, but "{{ ansible_user }}" is
+          {{ ansible_user_uid }}:{{ ansible_user_gid }}. Chown the Pi state
+          directories to 1000:1000 or rebuild the image with matching USER.
+
+    - name: Create Pi directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+      loop:
+        - "{{ pi_home }}"
+        - "{{ pi_workspace }}"
+        - "/home/{{ ansible_user }}/.pi"
+        - "/home/{{ ansible_user }}/.pi-web"
+        - "/home/{{ ansible_user }}/.hindsight"
+        - "/home/{{ ansible_user }}/.config"
+        - "{{ pi_config_dir }}"
+        - "/home/{{ ansible_user }}/jubilant-system"
+
+    - name: Copy Pi compose file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../pi-compose.yml"
+        dest: "{{ pi_home }}/pi-compose.yml"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+    - name: Copy Pi Dockerfile
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../pi.Dockerfile"
+        dest: "{{ pi_home }}/Dockerfile"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+    - name: Copy Pi setup script
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../scripts/pi-setup.sh"
+        dest: "{{ pi_home }}/pi-setup.sh"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Copy .env to Pi directory
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../.env"
+        dest: "{{ pi_home }}/.env"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+
+    - name: Create PI WEB config
+      ansible.builtin.copy:
+        dest: "{{ pi_config_dir }}/config.json"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+        content: |
+          {
+            "host": "127.0.0.1",
+            "port": 8504,
+            "pathAccess": {
+              "allowedPaths": [
+                "/workspace",
+                "/home/{{ ansible_user }}/jubilant-system"
+              ]
+            },
+            "spawnSessions": true,
+            "subsessions": true
+          }
+
+    - name: Create systemd user service for Pi
+      ansible.builtin.copy:
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/pi.service"
+        content: |
+          [Unit]
+          Description=Pi Coding Agent and PI WEB
+          After=network-online.target hindsight.service
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory={{ pi_home }}
+          ExecStart=/usr/bin/podman compose -f {{ pi_home }}/pi-compose.yml up
+          ExecStop=/usr/bin/podman compose -f {{ pi_home }}/pi-compose.yml down
+          Restart=on-failure
+          RestartSec=10s
+          Environment="HOME=/home/{{ ansible_user }}"
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Create systemd user wants directory
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Enable Pi to start on boot
+      ansible.builtin.file:
+        src: "/home/{{ ansible_user }}/.config/systemd/user/pi.service"
+        dest: "/home/{{ ansible_user }}/.config/systemd/user/default.target.wants/pi.service"
+        state: link
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Build and start Pi
+      ansible.builtin.shell:
+        cmd: |
+          cd {{ pi_home }} && \
+          podman compose -f pi-compose.yml down || true && \
+          podman compose -f pi-compose.yml up -d --build
+      become: true
+      become_user: "{{ ansible_user }}"
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+
+    - name: Wait for PI WEB session daemon
+      ansible.builtin.command:
+        cmd: podman exec pi-sessiond test -S /home/admin/.pi-web/sessiond.sock
+      register: pi_socket
+      until: pi_socket.rc == 0
+      retries: 30
+      delay: 2
+      changed_when: false
+      become: true
+      become_user: "{{ ansible_user }}"
+
+    - name: Install Pi packages and Hindsight integration
+      ansible.builtin.command:
+        cmd: podman exec -T pi-sessiond /usr/local/bin/pi-setup.sh
+      become: true
+      become_user: "{{ ansible_user }}"
+      timeout: 600
+
+    - name: Restart Pi services to load new packages
+      ansible.builtin.command:
+        cmd: podman compose -f {{ pi_home }}/pi-compose.yml restart sessiond web
+      become: true
+      become_user: "{{ ansible_user }}"
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+      changed_when: false
+
+    - name: Check Pi container status
+      ansible.builtin.shell:
+        cmd: podman ps --filter name=pi-
+      register: pi_status
+      changed_when: false

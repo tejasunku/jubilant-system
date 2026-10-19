@@ -8,3 +8,5 @@ routes:
     port: 9999
   - hostname: opencode.tejasunku.com
     port: 4096
+  - hostname: pi.tejasunku.com
+    port: 8504

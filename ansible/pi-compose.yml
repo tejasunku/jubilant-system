@@ -1,0 +1,77 @@
+# Pi Coding Agent + PI WEB
+# https://pi.dev/ and https://pi-web.dev/
+#
+# The container is a boundary around Pi; state and workspaces stay on the host
+# through bind mounts. Hindsight runs on the host network at 127.0.0.1:8888.
+#
+# Usage:
+#   1. Run: podman compose -f pi-compose.yml up -d --build
+#   2. Run: podman exec -T pi-sessiond /usr/local/bin/pi-setup.sh
+#   3. Access: http://127.0.0.1:8504
+
+x-pi-environment: &pi-environment
+  HOME: /home/admin
+  XDG_CONFIG_HOME: /home/admin/.config
+  PI_CODING_AGENT_DIR: /home/admin/.pi/agent
+  PI_WEB_DATA_DIR: /home/admin/.pi-web
+  PI_WEB_SESSIOND_SOCKET: /home/admin/.pi-web/sessiond.sock
+  PI_WEB_HOST: 127.0.0.1
+  PI_WEB_PORT: "8504"
+  HINDSIGHT_API_URL: http://127.0.0.1:8888
+
+x-pi-volumes: &pi-volumes
+  - /home/admin/.pi:/home/admin/.pi:Z
+  - /home/admin/.pi-web:/home/admin/.pi-web:Z
+  - /home/admin/.hindsight:/home/admin/.hindsight:Z
+  - /home/admin/.config/pi-web:/home/admin/.config/pi-web:Z
+  - /home/admin/workspace:/workspace:Z
+  - /home/admin/jubilant-system:/home/admin/jubilant-system:Z
+  - /home/admin/pi/pi-setup.sh:/usr/local/bin/pi-setup.sh:ro,Z
+
+services:
+  sessiond:
+    image: localhost/pi-custom:latest
+    container_name: pi-sessiond
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["pi-web-sessiond"]
+    network_mode: host
+    user: "1000:1000"
+    env_file:
+      - /home/admin/pi/.env
+    environment:
+      <<: *pi-environment
+    volumes: *pi-volumes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -S /home/admin/.pi-web/sessiond.sock"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  web:
+    image: localhost/pi-custom:latest
+    container_name: pi-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["pi-web-server"]
+    network_mode: host
+    user: "1000:1000"
+    env_file:
+      - /home/admin/pi/.env
+    environment:
+      <<: *pi-environment
+    volumes: *pi-volumes
+    depends_on:
+      sessiond:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8504/api/pi-web/runtime >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
