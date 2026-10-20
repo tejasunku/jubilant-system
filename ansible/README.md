@@ -86,6 +86,12 @@ ansible-playbook playbooks/cloudflared.yml   # publishes pi.tejasunku.com
 1000 (the usual first Ubuntu user). Otherwise the bind-mounted state directories
 are not writable. Verify with `id admin`.
 
+On rootless Podman the compose file sets `userns_mode: "keep-id"` so container
+UID 1000 maps to your host user. This requires **`podman-compose`** (not the
+`docker-compose` provider that `podman compose` prefers by default, whose API
+rejects `keep-id`). Install it if missing (`sudo apt install podman-compose`, or
+`pipx install podman-compose`) and verify with `command -v podman-compose`.
+
 If you deploy by hand instead of running the playbook:
 
 ```bash
@@ -98,9 +104,9 @@ printf '{\n  "host": "127.0.0.1",\n  "port": 8504,\n  "pathAccess": {"allowedPat
   > ~/.config/pi-web/config.json
 
 cd ~/pi
-podman compose -f pi-compose.yml up -d --build
-podman exec -T pi-sessiond /usr/local/bin/pi-setup.sh
-podman compose -f pi-compose.yml restart sessiond web
+podman-compose -f pi-compose.yml up -d --build
+podman exec pi-sessiond /usr/local/bin/pi-setup.sh
+podman-compose -f pi-compose.yml restart sessiond web
 ```
 
 The playbook installs the requested Pi packages:
@@ -114,16 +120,22 @@ The playbook installs the requested Pi packages:
 `billion-context-pi` also ships a delegation tool. `~/.pi/acp.json` is set to
 `{"delegate": false}` so `pi-subagents` remains the single delegation path.
 
-MCP servers are managed by `pi-mcp-adapter`. Because only `~/.pi` is mounted
-into the container, configure them on the host at:
+Hindsight is pinned to the existing `opencode` bank so Pi and OpenCode share one
+memory bank. `scripts/pi-setup.sh` writes `bankId` and `manageBankConfig: false`
+into `~/.hindsight/coding-agent.json`; the static `bankId` applies to every
+workspace, and disabling bank-config management stops Pi from reshaping the
+bank's settings. Hindsight reads this file once per workspace, so restart
+`pi.service` after changing it.
+
+MCP servers use Pi's built-in MCP support. Because only `~/.pi` is mounted into
+the container, configure them on the host at:
 
 - User scope: `~/.pi/agent/mcp.json`
-- Project scope: `<project>/.mcp.json` (for example `~/jubilant-system/.mcp.json`)
-- Adapter settings: `~/.pi/agent/mcp-adapter.json`
+- Project scope: `<project>/.pi/mcp.json` (for example `~/jubilant-system/.pi/mcp.json`)
+- OAuth tokens: `~/.pi/agent/mcp-auth.json`
 
-Run `/mcp-adapter setup` (or `/mcp`) inside Pi to add servers, then restart the
-Pi service. `~/.config/mcp/mcp.json` is also supported upstream but that path is
-not mounted, so prefer `~/.pi/agent/mcp.json`.
+Use `pi mcp add` / `pi mcp list` / `pi mcp login`, or `/mcp` inside a session.
+`~/.config/mcp/mcp.json` is not mounted, so prefer `~/.pi/agent/mcp.json`.
 
 ### Persistence
 
@@ -150,7 +162,7 @@ variable (for example `OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY`) in
 `~/pi/.env` and recreate the containers:
 
 ```bash
-podman compose -f ~/pi/pi-compose.yml up -d --force-recreate
+podman-compose -f ~/pi/pi-compose.yml up -d --force-recreate
 ```
 
 Stored `auth.json` credentials take precedence over environment variables.

@@ -16,11 +16,11 @@
     - name: Ensure deploy user matches the container user (UID/GID 1000)
       ansible.builtin.assert:
         that:
-          - ansible_user_uid == 1000
-          - ansible_user_gid == 1000
+          - ansible_facts['user_uid'] == 1000
+          - ansible_facts['user_gid'] == 1000
         fail_msg: >-
           The Pi container runs as UID/GID 1000, but "{{ ansible_user }}" is
-          {{ ansible_user_uid }}:{{ ansible_user_gid }}. Chown the Pi state
+          {{ ansible_facts['user_uid'] }}:{{ ansible_facts['user_gid'] }}. Chown the Pi state
           directories to 1000:1000 or rebuild the image with matching USER.
 
     - name: Create Pi directories
@@ -104,8 +104,8 @@
           [Service]
           Type=simple
           WorkingDirectory={{ pi_home }}
-          ExecStart=/usr/bin/podman compose -f {{ pi_home }}/pi-compose.yml up
-          ExecStop=/usr/bin/podman compose -f {{ pi_home }}/pi-compose.yml down
+          ExecStart=/usr/bin/podman-compose -f {{ pi_home }}/pi-compose.yml up
+          ExecStop=/usr/bin/podman-compose -f {{ pi_home }}/pi-compose.yml down
           Restart=on-failure
           RestartSec=10s
           Environment="HOME=/home/{{ ansible_user }}"
@@ -133,8 +133,8 @@
       ansible.builtin.shell:
         cmd: |
           cd {{ pi_home }} && \
-          podman compose -f pi-compose.yml down || true && \
-          podman compose -f pi-compose.yml up -d --build
+          podman-compose -f pi-compose.yml down || true && \
+          podman-compose -f pi-compose.yml up -d --build
       become: true
       become_user: "{{ ansible_user }}"
       environment:
@@ -153,14 +153,14 @@
 
     - name: Install Pi packages and Hindsight integration
       ansible.builtin.command:
-        cmd: podman exec -T pi-sessiond /usr/local/bin/pi-setup.sh
+        cmd: podman exec pi-sessiond /usr/local/bin/pi-setup.sh
       become: true
       become_user: "{{ ansible_user }}"
       timeout: 600
 
     - name: Restart Pi services to load new packages
       ansible.builtin.command:
-        cmd: podman compose -f {{ pi_home }}/pi-compose.yml restart sessiond web
+        cmd: podman-compose -f {{ pi_home }}/pi-compose.yml restart sessiond web
       become: true
       become_user: "{{ ansible_user }}"
       environment:

@@ -5,9 +5,20 @@
 # through bind mounts. Hindsight runs on the host network at 127.0.0.1:8888.
 #
 # Usage:
-#   1. Run: podman compose -f pi-compose.yml up -d --build
-#   2. Run: podman exec -T pi-sessiond /usr/local/bin/pi-setup.sh
+#   1. Run: podman-compose -f pi-compose.yml up -d --build
+#   2. Run: podman exec pi-sessiond /usr/local/bin/pi-setup.sh
 #   3. Access: http://127.0.0.1:8504
+#
+# Rootless Podman only: the images run as UID/GID 1000, so map the host user
+# through with userns_mode "keep-id" (container 1000 == host user). This needs
+# podman-compose, not the docker-compose provider podman prefers by default
+# (the Docker API rejects keep-id), and therefore in_pod must be false because
+# --userns and --pod cannot be combined.
+
+# podman-compose runs services in a pod by default, which conflicts with
+# --userns; disable it so userns_mode takes effect.
+x-podman:
+  in_pod: false
 
 x-pi-environment: &pi-environment
   HOME: /home/admin
@@ -38,6 +49,7 @@ services:
     command: ["pi-web-sessiond"]
     network_mode: host
     user: "1000:1000"
+    userns_mode: "keep-id"
     env_file:
       - /home/admin/pi/.env
     environment:
@@ -60,6 +72,7 @@ services:
     command: ["pi-web-server"]
     network_mode: host
     user: "1000:1000"
+    userns_mode: "keep-id"
     env_file:
       - /home/admin/pi/.env
     environment:
