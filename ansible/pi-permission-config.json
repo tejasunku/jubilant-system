@@ -1,0 +1,24 @@
+{
+  "permission": {
+    "*": "allow",
+    "path": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      ".ssh/**": "deny",
+      "**/.ssh/**": "deny",
+      "auth.json": "deny",
+      "**/auth.json": "deny",
+      "*.pem": "deny",
+      "*.key": "deny"
+    },
+    "bash": {
+      "*": "allow",
+      "rm -rf /": "deny",
+      "rm -rf /*": "deny",
+      "sudo *": "deny"
+    },
+    "external_directory": "allow"
+  }
+}

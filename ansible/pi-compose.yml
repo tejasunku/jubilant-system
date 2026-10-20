@@ -50,6 +50,7 @@ services:
     network_mode: host
     user: "1000:1000"
     userns_mode: "keep-id"
+    shm_size: "1g"
     env_file:
       - /home/admin/pi/.env
     environment:
@@ -73,6 +74,7 @@ services:
     network_mode: host
     user: "1000:1000"
     userns_mode: "keep-id"
+    shm_size: "1g"
     env_file:
       - /home/admin/pi/.env
     environment:

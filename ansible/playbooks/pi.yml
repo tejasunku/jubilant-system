@@ -39,6 +39,7 @@
         - "/home/{{ ansible_user }}/.config"
         - "{{ pi_config_dir }}"
         - "/home/{{ ansible_user }}/jubilant-system"
+        - "/home/{{ ansible_user }}/.pi/agent/extensions/pi-permission-system"
 
     - name: Copy Pi compose file
       ansible.builtin.copy:
@@ -71,6 +72,14 @@
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: '0600'
+
+    - name: Install Pi permission policy
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../pi-permission-config.json"
+        dest: "/home/{{ ansible_user }}/.pi/agent/extensions/pi-permission-system/config.json"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
 
     - name: Create PI WEB config
       ansible.builtin.copy:

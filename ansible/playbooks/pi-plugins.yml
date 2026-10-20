@@ -1,0 +1,222 @@
+---
+# Apply Pi package and config changes to a running stack.
+#
+# Pi packages (extensions, skills, prompt templates, themes) live in
+# ~/.pi/agent, which is bind-mounted into the container. Installing, updating,
+# or removing them only writes that state, so no image rebuild and no container
+# restart is needed.
+#
+# Running conversations keep their old extension runtime. Apply the changes with
+# /reload in each idle Pi conversation; new conversations pick them up
+# automatically. Packages that ship PI WEB server plugins, global provider
+# registration changes, and MCP/Hindsight config changes still need a session
+# daemon restart, which interrupts live sessions. Set pi_restart_sessiond=true
+# for those cases.
+#
+# Usage:
+#   ansible-playbook playbooks/pi-plugins.yml
+#   ansible-playbook playbooks/pi-plugins.yml -e 'pi_packages=["npm:some-package"]'
+#   ansible-playbook playbooks/pi-plugins.yml -e pi_remove_packages=["npm:old-package"]
+#   ansible-playbook playbooks/pi-plugins.yml -e pi_restart_sessiond=true
+#
+# The Playwright MCP server is merged into ~/.pi/agent/mcp.json here, but it
+# needs the Chrome/Playwright layers baked into the image. Rebuild after pulling
+# image changes: podman-compose -f ~/pi/pi-compose.yml up -d --build
+- name: Apply Pi package changes
+  hosts: ubuntu_servers
+  vars:
+    pi_home: "/home/{{ ansible_user }}/pi"
+    pi_container: pi-sessiond
+    pi_agent_dir: "/home/{{ ansible_user }}/.pi"
+    pi_packages:
+      - npm:billion-context-pi
+      - npm:pi-subagents
+      - npm:pi-web-access
+      - npm:pi-lens
+      - npm:@juicesharp/rpiv-ask-user-question
+      - npm:pi-background-tasks
+      - npm:@gotgenes/pi-permission-system
+    pi_remove_packages: []
+    pi_update_extensions: false
+    pi_restart_sessiond: false
+    pi_playwright_mcp:
+      command: playwright-mcp
+      args:
+        - --headless
+        - --no-sandbox
+        - --isolated
+        - --browser
+        - chrome
+        - --caps
+        - vision
+        - --viewport-size
+        - "1440,900"
+        - --output-dir
+        - /workspace/.playwright
+      exposure: direct
+      timeout: 120
+      description: "Headless Chrome for UI iteration (snapshots and screenshots)"
+
+  tasks:
+    - name: Verify the Pi session daemon is running
+      ansible.builtin.command:
+        cmd: podman exec {{ pi_container }} true
+      changed_when: false
+
+    - name: Remove Pi packages
+      ansible.builtin.command:
+        cmd: podman exec {{ pi_container }} pi remove {{ item }}
+      loop: "{{ pi_remove_packages }}"
+      register: pi_removed
+      changed_when: "'not installed' not in (pi_removed.stdout | lower)"
+      failed_when: >-
+        pi_removed.rc != 0 and
+        'not installed' not in ((pi_removed.stderr | default('')) | lower)
+
+    - name: Install or update Pi packages
+      ansible.builtin.command:
+        cmd: podman exec {{ pi_container }} pi install {{ item }}
+      loop: "{{ pi_packages }}"
+      register: pi_installed
+      changed_when: "'up to date' not in (pi_installed.stdout | lower)"
+      timeout: 300
+
+    - name: Reconcile installed Pi packages
+      ansible.builtin.command:
+        cmd: podman exec {{ pi_container }} pi update --extensions
+      when: pi_update_extensions | bool
+      register: pi_updated
+      changed_when: "'updated' in (pi_updated.stdout | lower)"
+      timeout: 300
+
+    - name: Check for local MCP server config
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/../pi-mcp.json"
+      delegate_to: localhost
+      become: false
+      register: pi_mcp_local
+
+    - name: Install Pi MCP server config
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../pi-mcp.json"
+        dest: "{{ pi_agent_dir }}/mcp.json"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+      when: pi_mcp_local.stat.exists
+
+    - name: Note missing MCP server config
+      ansible.builtin.debug:
+        msg: >-
+          No ansible/pi-mcp.json found; skipping MCP server config. Copy
+          pi-mcp.json.example to pi-mcp.json to manage servers from the repo.
+      when: not pi_mcp_local.stat.exists
+
+    - name: Read installed MCP server config
+      ansible.builtin.slurp:
+        src: "{{ pi_agent_dir }}/mcp.json"
+      register: pi_mcp_existing
+      failed_when: false
+
+    - name: Merge the Playwright MCP server into the Pi MCP config
+      ansible.builtin.copy:
+        dest: "{{ pi_agent_dir }}/mcp.json"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+        content: >-
+          {{ ((pi_mcp_existing.content | b64decode | from_json)
+              if (pi_mcp_existing.content is defined and pi_mcp_existing.content)
+              else {})
+             | combine({'mcpServers': {'playwright': pi_playwright_mcp}}, recursive=True)
+             | to_nice_json }}
+
+    - name: Create Pi permission extension directory
+      ansible.builtin.file:
+        path: "{{ pi_agent_dir }}/extensions/pi-permission-system"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Install Pi permission policy
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../pi-permission-config.json"
+        dest: "{{ pi_agent_dir }}/extensions/pi-permission-system/config.json"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+    - name: Read Pi ACP config
+      ansible.builtin.slurp:
+        src: "{{ pi_agent_dir }}/acp.json"
+      register: pi_acp_raw
+      failed_when: false
+
+    - name: Ensure billion-context delegates through pi-subagents
+      ansible.builtin.copy:
+        dest: "{{ pi_agent_dir }}/acp.json"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+        content: >-
+          {{ ((pi_acp_raw.content | b64decode | from_json) if pi_acp_raw.content is defined else {})
+             | combine({'delegate': false}) | to_nice_json }}
+
+    - name: Read Hindsight integration config
+      ansible.builtin.slurp:
+        src: "/home/{{ ansible_user }}/.hindsight/coding-agent.json"
+      register: pi_hindsight_raw
+      failed_when: false
+
+    - name: Pin Hindsight to the shared bank
+      ansible.builtin.copy:
+        dest: "/home/{{ ansible_user }}/.hindsight/coding-agent.json"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+        content: >-
+          {{ ((pi_hindsight_raw.content | b64decode | from_json) if pi_hindsight_raw.content is defined else {})
+             | combine({'bankId': 'opencode', 'manageBankConfig': false}) | to_nice_json }}
+      when: pi_hindsight_raw.content is defined
+
+    - name: Restart the Pi session daemon
+      ansible.builtin.command:
+        cmd: podman restart {{ pi_container }}
+      when: pi_restart_sessiond | bool
+
+    - name: Wait for the session daemon after restart
+      ansible.builtin.command:
+        cmd: podman exec {{ pi_container }} test -S /home/admin/.pi-web/sessiond.sock
+      register: pi_socket
+      until: pi_socket.rc == 0
+      retries: 30
+      delay: 2
+      changed_when: false
+      when: pi_restart_sessiond | bool
+
+    - name: Show installed Pi packages
+      ansible.builtin.command:
+        cmd: podman exec {{ pi_container }} pi list
+      register: pi_list
+      changed_when: false
+
+    - name: Print next step
+      ansible.builtin.debug:
+        msg:
+          - "Pi packages applied; no image rebuild was needed."
+          - "Run /reload in each idle Pi conversation to load the new extension runtime."
+          - "New conversations pick the changes up automatically."
+          - >-
+            MCP servers from ~/.pi/agent/mcp.json connect when a new session
+            starts; no daemon restart is needed. Verify with pi mcp list or
+            /mcp-adapter status.
+          - >-
+            The Playwright MCP server is merged into that file, but Chrome is
+            baked into the image; if the image predates it, rebuild with:
+            podman-compose -f {{ pi_home }}/pi-compose.yml up -d --build
+          - >-
+            Hindsight config changes take effect in new sessions; use
+            pi_restart_sessiond=true to bounce the daemon (interrupts live
+            sessions).
+          - "Changing ~/pi/.env still requires: podman-compose -f {{ pi_home }}/pi-compose.yml up -d --force-recreate (no rebuild)."

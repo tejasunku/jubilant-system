@@ -7,7 +7,11 @@ export PI_CODING_AGENT_DIR="${PI_CODING_AGENT_DIR:-${HOME}/.pi/agent}"
 for package in \
   npm:billion-context-pi \
   npm:pi-subagents \
-  npm:pi-web-access; do
+  npm:pi-web-access \
+  npm:pi-lens \
+  npm:@juicesharp/rpiv-ask-user-question \
+  npm:pi-background-tasks \
+  npm:@gotgenes/pi-permission-system; do
   pi install "${package}"
 done
 

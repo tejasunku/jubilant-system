@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "playwright-mcp",
+      "args": [
+        "--headless",
+        "--no-sandbox",
+        "--isolated",
+        "--browser",
+        "chrome",
+        "--caps",
+        "vision",
+        "--viewport-size",
+        "1440,900",
+        "--output-dir",
+        "/workspace/.playwright"
+      ],
+      "exposure": "direct",
+      "timeout": 120,
+      "description": "Headless Chrome for UI iteration: accessibility snapshots and screenshots"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"],
+      "description": "Example stdio server scoped to the mounted workspace"
+    }
+  }
+}

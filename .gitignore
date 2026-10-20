@@ -16,3 +16,6 @@ known_hosts
 
 .env
 .env.*
+
+# Pi MCP server config may contain secrets
+ansible/pi-mcp.json
